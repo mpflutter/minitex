@@ -4,6 +4,11 @@ exports.ParagraphBuilder = void 0;
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.EmbindObject {
+    constructor() {
+        super(...arguments);
+        this.spans = [];
+        this.styles = [];
+    }
     static MakeFromFontCollection() {
         return new ParagraphBuilder();
     }
@@ -24,14 +29,19 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param str
      */
     addText(str) {
-        console.log("addtext", str);
+        let mergedStyle = {};
+        this.styles.forEach((it) => {
+            Object.assign(mergedStyle, it);
+        });
+        const span = new paragraph_1.TextSpan(str, mergedStyle);
+        this.spans.push(span);
     }
     /**
      * Returns a Paragraph object that can be used to be layout and paint the text to an
      * Canvas.
      */
     build() {
-        return new paragraph_1.Paragraph();
+        return new paragraph_1.Paragraph(this.spans);
     }
     /**
      * @param words is an array of word edges (starting or ending). You can
@@ -98,14 +108,20 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * was produced as a set of addText calls).
      */
     getText() {
-        throw "todo";
+        let text = "";
+        this.spans.forEach((it) => {
+            if (it instanceof paragraph_1.TextSpan) {
+                text += it.text;
+            }
+        });
+        return text;
     }
     /**
      * Remove a style from the stack. Useful to apply different styles to chunks
      * of text such as bolding.
      */
     pop() {
-        console.log("pop");
+        this.styles.pop();
     }
     /**
      * Push a style to the stack. The corresponding text added with addText will
@@ -113,7 +129,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param text
      */
     pushStyle(text) {
-        console.log("push style", text);
+        this.styles.push(text);
     }
     /**
      * Pushes a TextStyle using paints instead of colors for foreground and background.
@@ -129,7 +145,8 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * been added, but keeping the initial ParagraphStyle.
      */
     reset() {
-        console.log("reset");
+        this.spans = [];
+        this.styles = [];
     }
 }
 exports.ParagraphBuilder = ParagraphBuilder;

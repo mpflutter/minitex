@@ -132,6 +132,8 @@ export interface LineMetrics {
   width: number;
   /** The left edge of the line. The right edge can be obtained with `left + width` */
   left: number;
+  /** The y offset of the line to top. */
+  yOffset: number;
   /** The y position of the baseline for this line from the top of the paragraph. */
   baseline: number;
   /** Zero indexed line number. */

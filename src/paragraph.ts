@@ -1,4 +1,6 @@
+import { Drawer } from "./drawer";
 import {
+  Affinity,
   EmbindObject,
   GlyphInfo,
   LineMetrics,
@@ -9,10 +11,66 @@ import {
   ShapedLine,
   URange,
 } from "./skia";
+import { TextStyle } from "./text_style";
 
-export const drawParagraph = (paragraph: Paragraph) => {}
+export const drawParagraph = function (
+  CanvasKit: any,
+  skCanvas: any,
+  paragraph: Paragraph,
+  dx: number,
+  dy: number
+) {
+  const drawer = new Drawer(paragraph);
+  const imageData = drawer.draw();
+  const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
+  const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
+  const dstRect = CanvasKit.XYWHRect(
+    dx,
+    dy,
+    imageData.width / Drawer.pixelRatio,
+    imageData.height / Drawer.pixelRatio
+  );
+  const skPaint = new CanvasKit.Paint();
+  skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
+};
+
+export class Span {}
+
+export class TextSpan extends Span {
+  constructor(readonly text: string, readonly style: TextStyle) {
+    super();
+  }
+
+  toCanvasFillStyle(): string {
+    const rgbaColor = this.style.color as Float32Array;
+    const r = Math.round(rgbaColor[0] * 255).toString(16);
+    const g = Math.round(rgbaColor[1] * 255).toString(16);
+    const b = Math.round(rgbaColor[2] * 255).toString(16);
+    const a = Math.round(rgbaColor[3] * 255).toString(16);
+    const padHex = (hex: string) => (hex.length === 1 ? "0" + hex : hex);
+    const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
+    return hexColor;
+  }
+
+  toCanvasFont(): string {
+    let font = `${this.style.fontSize}px `;
+    if (this.style.fontFamilies) {
+      this.style.fontFamilies.forEach((it, idx) => {
+        if (idx > 0) {
+          font += ",";
+        }
+        font += `"${it}"`;
+      });
+    }
+    return font;
+  }
+}
 
 export class Paragraph extends EmbindObject {
+  constructor(readonly spans: Span[]) {
+    super();
+  }
+
   didExceedMaxLines(): boolean {
     return false;
   }
@@ -26,7 +84,8 @@ export class Paragraph extends EmbindObject {
    * with the top left corner as the origin, and +y direction as down.
    */
   getGlyphPositionAtCoordinate(dx: number, dy: number): PositionWithAffinity {
-    throw "todo";
+    return { pos: 0, affinity: {} as any };
+    throw "getGlyphPositionAtCoordinate todo";
   }
 
   /**
@@ -48,7 +107,13 @@ export class Paragraph extends EmbindObject {
   }
 
   getHeight(): number {
-    return 0;
+    const lineMetrics = this.getLineMetrics();
+    let height = 0;
+    for (let i = 0; i < lineMetrics.length; i++) {
+      height += lineMetrics[i].height;
+    }
+    // console.log("getHeight", height);
+    return height;
   }
 
   getIdeographicBaseline(): number {
@@ -64,8 +129,10 @@ export class Paragraph extends EmbindObject {
     return 0;
   }
 
+  _lineMetrics: LineMetrics[] = [];
+
   getLineMetrics(): LineMetrics[] {
-    return [];
+    return this._lineMetrics;
   }
 
   /**
@@ -74,7 +141,17 @@ export class Paragraph extends EmbindObject {
    * specified max line number.
    */
   getLineMetricsAt(lineNumber: number): LineMetrics | null {
-    return null;
+    return this._lineMetrics[lineNumber] ?? null;
+  }
+
+  getLineMetricsOfRange(start: number, end: number): LineMetrics[] {
+    let lineMetrics: LineMetrics[] = [];
+    this._lineMetrics.forEach((it) => {
+      if (start <= it.startIndex && end >= it.endIndex) {
+        lineMetrics.push(it);
+      }
+    });
+    return lineMetrics;
   }
 
   getLongestLine(): number {
@@ -82,22 +159,40 @@ export class Paragraph extends EmbindObject {
   }
 
   getMaxIntrinsicWidth(): number {
-    return 0;
+    const lineMetrics = this.getLineMetrics();
+    let maxWidth = 0;
+    for (let i = 0; i < lineMetrics.length; i++) {
+      maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+    }
+    // console.log("getMaxIntrinsicWidth", maxWidth);
+    return maxWidth;
   }
 
   getMaxWidth(): number {
-    return 0;
+    const lineMetrics = this.getLineMetrics();
+    let maxWidth = 0;
+    for (let i = 0; i < lineMetrics.length; i++) {
+      maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+    }
+    // console.log("getMaxWidth", maxWidth);
+    return maxWidth;
   }
 
   getMinIntrinsicWidth(): number {
-    return 0;
+    const lineMetrics = this.getLineMetrics();
+    let width = 0;
+    for (let i = 0; i < lineMetrics.length; i++) {
+      width = Math.max(width, lineMetrics[i].width);
+    }
+    // console.log("getMinIntrinsicWidth", width);
+    return width;
   }
 
   /**
    * Returns the total number of visible lines in the paragraph.
    */
   getNumberOfLines(): number {
-    return 0;
+    return this._lineMetrics.length;
   }
 
   getRectsForPlaceholders(): RectWithDirection[] {
@@ -125,7 +220,7 @@ export class Paragraph extends EmbindObject {
    * @param offset
    */
   getWordBoundary(offset: number): URange {
-    throw "todo";
+    throw "getWordBoundary todo";
   }
 
   /**
@@ -140,7 +235,7 @@ export class Paragraph extends EmbindObject {
    * @param width
    */
   layout(width: number): void {
-    console.log("layout", width);
+    new Drawer(this).layout(width);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Paint } from "./paint";
-import { Paragraph } from "./paragraph";
+import { Paragraph, Span, TextSpan } from "./paragraph";
 import {
   EmbindObject,
   InputGraphemes,
@@ -14,6 +14,9 @@ export class ParagraphBuilder extends EmbindObject {
   static MakeFromFontCollection() {
     return new ParagraphBuilder();
   }
+
+  private spans: Span[] = [];
+  private styles: TextStyle[] = [];
 
   /**
    * Pushes the information required to leave an open space.
@@ -39,7 +42,12 @@ export class ParagraphBuilder extends EmbindObject {
    * @param str
    */
   addText(str: string): void {
-    console.log("addtext", str);
+    let mergedStyle: TextStyle = {};
+    this.styles.forEach((it) => {
+      Object.assign(mergedStyle, it);
+    });
+    const span = new TextSpan(str, mergedStyle);
+    this.spans.push(span);
   }
 
   /**
@@ -47,7 +55,7 @@ export class ParagraphBuilder extends EmbindObject {
    * Canvas.
    */
   build(): Paragraph {
-    return new Paragraph();
+    return new Paragraph(this.spans);
   }
 
   /**
@@ -118,7 +126,13 @@ export class ParagraphBuilder extends EmbindObject {
    * was produced as a set of addText calls).
    */
   getText(): string {
-    throw "todo";
+    let text = "";
+    this.spans.forEach((it) => {
+      if (it instanceof TextSpan) {
+        text += it.text;
+      }
+    });
+    return text;
   }
 
   /**
@@ -126,7 +140,7 @@ export class ParagraphBuilder extends EmbindObject {
    * of text such as bolding.
    */
   pop(): void {
-    console.log("pop");
+    this.styles.pop();
   }
 
   /**
@@ -135,7 +149,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param text
    */
   pushStyle(text: TextStyle): void {
-    console.log("push style", text);
+    this.styles.push(text);
   }
 
   /**
@@ -153,6 +167,7 @@ export class ParagraphBuilder extends EmbindObject {
    * been added, but keeping the initial ParagraphStyle.
    */
   reset(): void {
-    console.log("reset");
+    this.spans = [];
+    this.styles = [];
   }
 }

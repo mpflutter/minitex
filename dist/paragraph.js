@@ -1,10 +1,57 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Paragraph = exports.drawParagraph = void 0;
+exports.Paragraph = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
+const drawer_1 = require("./drawer");
 const skia_1 = require("./skia");
-const drawParagraph = (paragraph) => { };
+const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
+    const drawer = new drawer_1.Drawer(paragraph);
+    const imageData = drawer.draw();
+    const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
+    const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
+    const dstRect = CanvasKit.XYWHRect(dx, dy, imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
+    const skPaint = new CanvasKit.Paint();
+    skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
+};
 exports.drawParagraph = drawParagraph;
+class Span {
+}
+exports.Span = Span;
+class TextSpan extends Span {
+    constructor(text, style) {
+        super();
+        this.text = text;
+        this.style = style;
+    }
+    toCanvasFillStyle() {
+        const rgbaColor = this.style.color;
+        const r = Math.round(rgbaColor[0] * 255).toString(16);
+        const g = Math.round(rgbaColor[1] * 255).toString(16);
+        const b = Math.round(rgbaColor[2] * 255).toString(16);
+        const a = Math.round(rgbaColor[3] * 255).toString(16);
+        const padHex = (hex) => (hex.length === 1 ? "0" + hex : hex);
+        const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
+        return hexColor;
+    }
+    toCanvasFont() {
+        let font = `${this.style.fontSize}px `;
+        if (this.style.fontFamilies) {
+            this.style.fontFamilies.forEach((it, idx) => {
+                if (idx > 0) {
+                    font += ",";
+                }
+                font += `"${it}"`;
+            });
+        }
+        return font;
+    }
+}
+exports.TextSpan = TextSpan;
 class Paragraph extends skia_1.EmbindObject {
+    constructor(spans) {
+        super();
+        this.spans = spans;
+        this._lineMetrics = [];
+    }
     didExceedMaxLines() {
         return false;
     }
@@ -16,7 +63,8 @@ class Paragraph extends skia_1.EmbindObject {
      * with the top left corner as the origin, and +y direction as down.
      */
     getGlyphPositionAtCoordinate(dx, dy) {
-        throw "todo";
+        return { pos: 0, affinity: {} };
+        throw "getGlyphPositionAtCoordinate todo";
     }
     /**
      * Returns the information associated with the closest glyph at the specified
@@ -35,7 +83,13 @@ class Paragraph extends skia_1.EmbindObject {
         return null;
     }
     getHeight() {
-        return 0;
+        const lineMetrics = this.getLineMetrics();
+        let height = 0;
+        for (let i = 0; i < lineMetrics.length; i++) {
+            height += lineMetrics[i].height;
+        }
+        // console.log("getHeight", height);
+        return height;
     }
     getIdeographicBaseline() {
         return 0;
@@ -49,7 +103,7 @@ class Paragraph extends skia_1.EmbindObject {
         return 0;
     }
     getLineMetrics() {
-        return [];
+        return this._lineMetrics;
     }
     /**
      * Returns the LineMetrics of the line at the specified line number, or null
@@ -57,25 +111,53 @@ class Paragraph extends skia_1.EmbindObject {
      * specified max line number.
      */
     getLineMetricsAt(lineNumber) {
-        return null;
+        var _a;
+        return (_a = this._lineMetrics[lineNumber]) !== null && _a !== void 0 ? _a : null;
+    }
+    getLineMetricsOfRange(start, end) {
+        let lineMetrics = [];
+        this._lineMetrics.forEach((it) => {
+            if (start <= it.startIndex && end >= it.endIndex) {
+                lineMetrics.push(it);
+            }
+        });
+        return lineMetrics;
     }
     getLongestLine() {
         return 0;
     }
     getMaxIntrinsicWidth() {
-        return 0;
+        const lineMetrics = this.getLineMetrics();
+        let maxWidth = 0;
+        for (let i = 0; i < lineMetrics.length; i++) {
+            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+        }
+        // console.log("getMaxIntrinsicWidth", maxWidth);
+        return maxWidth;
     }
     getMaxWidth() {
-        return 0;
+        const lineMetrics = this.getLineMetrics();
+        let maxWidth = 0;
+        for (let i = 0; i < lineMetrics.length; i++) {
+            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+        }
+        // console.log("getMaxWidth", maxWidth);
+        return maxWidth;
     }
     getMinIntrinsicWidth() {
-        return 0;
+        const lineMetrics = this.getLineMetrics();
+        let width = 0;
+        for (let i = 0; i < lineMetrics.length; i++) {
+            width = Math.max(width, lineMetrics[i].width);
+        }
+        // console.log("getMinIntrinsicWidth", width);
+        return width;
     }
     /**
      * Returns the total number of visible lines in the paragraph.
      */
     getNumberOfLines() {
-        return 0;
+        return this._lineMetrics.length;
     }
     getRectsForPlaceholders() {
         return [];
@@ -95,7 +177,7 @@ class Paragraph extends skia_1.EmbindObject {
      * @param offset
      */
     getWordBoundary(offset) {
-        throw "todo";
+        throw "getWordBoundary todo";
     }
     /**
      * Returns an array of ShapedLine objects, describing the paragraph.
@@ -108,7 +190,7 @@ class Paragraph extends skia_1.EmbindObject {
      * @param width
      */
     layout(width) {
-        console.log("layout", width);
+        new drawer_1.Drawer(this).layout(width);
     }
     /**
      * When called after shaping, returns the glyph IDs which were not matched
