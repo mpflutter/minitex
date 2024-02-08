@@ -14,6 +14,10 @@ export class EmbindObject {
   }
 }
 
+export interface SkEnum<T> {
+  value: T;
+}
+
 export type InputWords = Uint32Array | number[];
 export type InputGraphemes = Uint32Array | number[];
 export type InputLineBreaks = Uint32Array | number[];

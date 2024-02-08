@@ -74,7 +74,7 @@ class Drawer {
                                 undefined) {
                                 const textAlign = (_a = this.paragraph.paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value;
                                 const textDirection = (_b = this.paragraph.paragraphStyle.textDirection) === null || _b === void 0 ? void 0 : _b.value;
-                                console.log("textAligntextAlign", textAlign, textDirection);
+                                console.log("textAligntextAlign", textAlign);
                                 if (textAlign === skia_1.TextAlign.Center) {
                                     linesDrawingRightBounds[currentLineMetrics.lineNumber] =
                                         (this.paragraph.getMaxWidth() - currentLineMetrics.width) /

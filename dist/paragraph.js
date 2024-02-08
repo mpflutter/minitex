@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Paragraph = exports.NewlineSpan = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
 const drawer_1 = require("./drawer");
 const skia_1 = require("./skia");
+const text_style_1 = require("./text_style");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     const drawer = new drawer_1.Drawer(paragraph);
     const imageData = drawer.draw();
@@ -40,14 +41,36 @@ class TextSpan extends Span {
         return hexColor;
     }
     toCanvasFont() {
+        var _a, _b, _c, _d;
         let font = `${this.style.fontSize}px `;
         if (this.style.fontFamilies) {
-            this.style.fontFamilies.forEach((it, idx) => {
-                if (idx > 0) {
-                    font += ",";
-                }
-                font += `"${it}"`;
-            });
+            // this.style.fontFamilies.forEach((it, idx) => {
+            //   if (idx > 0) {
+            //     font += ",";
+            //   }
+            //   font += `"${it}"`;
+            // });
+            font += "system-ui";
+        }
+        const fontWeight = (_b = (_a = this.style.fontStyle) === null || _a === void 0 ? void 0 : _a.weight) === null || _b === void 0 ? void 0 : _b.value;
+        if (fontWeight && fontWeight !== 400) {
+            if (fontWeight >= 900) {
+                font = "900 " + font;
+            }
+            else {
+                font = fontWeight.toFixed(0) + " " + font;
+            }
+        }
+        const slant = (_d = (_c = this.style.fontStyle) === null || _c === void 0 ? void 0 : _c.slant) === null || _d === void 0 ? void 0 : _d.value;
+        if (slant) {
+            switch (slant) {
+                case text_style_1.FontSlant.Italic:
+                    font = "italic " + font;
+                    break;
+                case text_style_1.FontSlant.Oblique:
+                    font = "oblique " + font;
+                    break;
+            }
         }
         return font;
     }

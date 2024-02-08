@@ -12,7 +12,7 @@ import {
   ShapedLine,
   URange,
 } from "./skia";
-import { TextStyle } from "./text_style";
+import { FontSlant, FontWeight, TextStyle } from "./text_style";
 
 export const drawParagraph = function (
   CanvasKit: any,
@@ -67,12 +67,33 @@ export class TextSpan extends Span {
   toCanvasFont(): string {
     let font = `${this.style.fontSize}px `;
     if (this.style.fontFamilies) {
-      this.style.fontFamilies.forEach((it, idx) => {
-        if (idx > 0) {
-          font += ",";
-        }
-        font += `"${it}"`;
-      });
+      // this.style.fontFamilies.forEach((it, idx) => {
+      //   if (idx > 0) {
+      //     font += ",";
+      //   }
+      //   font += `"${it}"`;
+      // });
+      font += "system-ui";
+    }
+    const fontWeight = this.style.fontStyle?.weight?.value;
+    if (fontWeight && fontWeight !== 400) {
+      if (fontWeight >= 900) {
+        font = "900 " + font;
+      }
+      else {
+        font = fontWeight.toFixed(0) + " " + font;
+      }
+    }
+    const slant = this.style.fontStyle?.slant?.value;
+    if (slant) {
+      switch (slant) {
+        case FontSlant.Italic:
+          font = "italic " + font;
+          break;
+        case FontSlant.Oblique:
+          font = "oblique " + font;
+          break;
+      }
     }
     return font;
   }

@@ -101,7 +101,7 @@ export class Drawer {
                   this.paragraph.paragraphStyle.textAlign?.value;
                 const textDirection =
                   this.paragraph.paragraphStyle.textDirection?.value;
-                console.log("textAligntextAlign", textAlign, textDirection);
+                console.log("textAligntextAlign", textAlign);
                 if (textAlign === TextAlign.Center) {
                   linesDrawingRightBounds[currentLineMetrics!.lineNumber] =
                     (this.paragraph.getMaxWidth() - currentLineMetrics!.width) /
