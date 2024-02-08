@@ -4,13 +4,20 @@ exports.ParagraphBuilder = void 0;
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.EmbindObject {
-    static MakeFromFontCollection(style, fontCollection) {
-        console.log("MakeFromFontCollection", style, fontCollection);
-        return new ParagraphBuilder(style);
+    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection) {
+        var _a;
+        const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
+        if (fontFamilies && fontFamilies[0] === "Roboto") {
+            return new ParagraphBuilder(style);
+        }
+        else {
+            return originMakeFromFontCollectionMethod(style, fontCollection);
+        }
     }
     constructor(style) {
         super();
         this.style = style;
+        this.isMiniTex = true;
         this.spans = [];
         this.styles = [];
     }

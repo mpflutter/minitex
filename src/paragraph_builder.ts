@@ -12,14 +12,27 @@ import {
 import { TextStyle } from "./text_style";
 
 export class ParagraphBuilder extends EmbindObject {
-  static MakeFromFontCollection(style: ParagraphStyle, fontCollection: any) {
-    console.log("MakeFromFontCollection", style, fontCollection);
-    return new ParagraphBuilder(style);
+  static MakeFromFontCollection(
+    originMakeFromFontCollectionMethod: (
+      style: ParagraphStyle,
+      fontCollection: any
+    ) => any,
+    style: ParagraphStyle,
+    fontCollection: any
+  ) {
+    const fontFamilies = style.textStyle?.fontFamilies;
+    if (fontFamilies && fontFamilies[0] === "Roboto") {
+      return new ParagraphBuilder(style);
+    } else {
+      return originMakeFromFontCollectionMethod(style, fontCollection);
+    }
   }
 
   constructor(readonly style: ParagraphStyle) {
     super();
   }
+
+  isMiniTex = true;
 
   private spans: Span[] = [];
   private styles: TextStyle[] = [];

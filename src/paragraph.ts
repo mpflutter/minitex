@@ -79,8 +79,7 @@ export class TextSpan extends Span {
     if (fontWeight && fontWeight !== 400) {
       if (fontWeight >= 900) {
         font = "900 " + font;
-      }
-      else {
+      } else {
         font = fontWeight.toFixed(0) + " " + font;
       }
     }
@@ -105,6 +104,8 @@ export class Paragraph extends EmbindObject {
   constructor(readonly spans: Span[], readonly paragraphStyle: ParagraphStyle) {
     super();
   }
+
+  isMiniTex = true;
 
   didExceedMaxLines(): boolean {
     return false;

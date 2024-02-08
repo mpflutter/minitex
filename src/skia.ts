@@ -1,3 +1,5 @@
+import { TextStyle } from "./text_style";
+
 export class EmbindObject {
   _type = "";
 
@@ -199,7 +201,7 @@ export interface ParagraphStyle {
   textAlign?: { value: TextAlign };
   textDirection?: { value: TextDirection };
   // textHeightBehavior?: TextHeightBehavior;
-  // textStyle?: TextStyle;
+  textStyle?: TextStyle;
   // applyRoundingHack?: boolean;
 }
 

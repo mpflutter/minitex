@@ -84,6 +84,7 @@ class Paragraph extends skia_1.EmbindObject {
         super();
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
+        this.isMiniTex = true;
         this._lineMetrics = [];
     }
     didExceedMaxLines() {

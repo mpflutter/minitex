@@ -44,6 +44,9 @@ export class Drawer {
     this.initCanvas();
     const width = this.paragraph.getMaxWidth() * Drawer.pixelRatio;
     const height = this.paragraph.getHeight() * Drawer.pixelRatio;
+    if (width <= 0 || height <= 0) {
+      throw "invalid text draw.";
+    }
     const context = Drawer.sharedRenderContext;
     context.clearRect(0, 0, width, height);
     context.save();

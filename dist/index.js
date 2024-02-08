@@ -7,9 +7,21 @@ const paragraph_builder_1 = require("./paragraph_builder");
 class MiniTex {
     static install(canvasKit, pixelRatio) {
         drawer_1.Drawer.pixelRatio = pixelRatio;
-        canvasKit.ParagraphBuilder = paragraph_builder_1.ParagraphBuilder;
+        const originMakeFromFontCollectionMethod = canvasKit.ParagraphBuilder.MakeFromFontCollection;
+        canvasKit.ParagraphBuilder.MakeFromFontCollection = function (style, fontCollection) {
+            console.log("canvasKit.ParagraphBuilder.MakeFromFontCollection");
+            return paragraph_builder_1.ParagraphBuilder.MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection);
+        };
+        const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;
         canvasKit.Canvas.prototype.drawParagraph = function (paragraph, dx, dy) {
-            (0, paragraph_1.drawParagraph)(canvasKit, this, paragraph, dx, dy);
+            if (paragraph.isMiniTex === true) {
+                (0, paragraph_1.drawParagraph)(canvasKit, this, paragraph, dx, dy);
+            }
+            else {
+                originDrawParagraphMethod.apply(this, [paragraph, dx, dy]);
+                // console.log("thisthisthis", this);
+                // originDrawParagraphMethod(paragraph, dx, dy);
+            }
         };
     }
 }
