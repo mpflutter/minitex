@@ -6,7 +6,14 @@ const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     const drawer = new drawer_1.Drawer(paragraph);
     const imageData = drawer.draw();
-    const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
+    // const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
+    const canvasImg = CanvasKit.MakeImage({
+        width: imageData.width,
+        height: imageData.height,
+        alphaType: CanvasKit.AlphaType.Unpremul,
+        colorType: CanvasKit.ColorType.RGBA_8888,
+        colorSpace: CanvasKit.ColorSpace.SRGB,
+    }, imageData.data, 4 * imageData.width);
     const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
     const dstRect = CanvasKit.XYWHRect(dx, dy, imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
     const skPaint = new CanvasKit.Paint();
@@ -84,11 +91,12 @@ class Paragraph extends skia_1.EmbindObject {
     }
     getHeight() {
         const lineMetrics = this.getLineMetrics();
+        console.log(lineMetrics);
         let height = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
             height += lineMetrics[i].height;
         }
-        // console.log("getHeight", height);
+        console.log("getHeight", height);
         return height;
     }
     getIdeographicBaseline() {
@@ -132,7 +140,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             maxWidth = Math.max(maxWidth, lineMetrics[i].width);
         }
-        // console.log("getMaxIntrinsicWidth", maxWidth);
+        console.log("getMaxIntrinsicWidth", maxWidth);
         return maxWidth;
     }
     getMaxWidth() {
@@ -141,7 +149,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             maxWidth = Math.max(maxWidth, lineMetrics[i].width);
         }
-        // console.log("getMaxWidth", maxWidth);
+        console.log("getMaxWidth", maxWidth);
         return maxWidth;
     }
     getMinIntrinsicWidth() {
@@ -150,7 +158,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             width = Math.max(width, lineMetrics[i].width);
         }
-        // console.log("getMinIntrinsicWidth", width);
+        console.log("getMinIntrinsicWidth", width);
         return width;
     }
     /**

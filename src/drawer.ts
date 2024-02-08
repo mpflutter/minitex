@@ -35,10 +35,7 @@ export class Drawer {
   layout(width: number): void {
     this.initCanvas();
 
-    const layouter = new TextLayout(
-      this.paragraph,
-      Drawer.sharedLayoutContext
-    );
+    const layouter = new TextLayout(this.paragraph, Drawer.sharedLayoutContext);
     this.paragraph._lineMetrics = layouter.layout(width);
   }
 
