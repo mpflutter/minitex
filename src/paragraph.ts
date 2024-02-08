@@ -4,6 +4,7 @@ import {
   EmbindObject,
   GlyphInfo,
   LineMetrics,
+  ParagraphStyle,
   PositionWithAffinity,
   RectHeightStyle,
   RectWidthStyle,
@@ -77,8 +78,10 @@ export class TextSpan extends Span {
   }
 }
 
+export class NewlineSpan extends Span {}
+
 export class Paragraph extends EmbindObject {
-  constructor(readonly spans: Span[]) {
+  constructor(readonly spans: Span[], readonly paragraphStyle: ParagraphStyle) {
     super();
   }
 
@@ -159,7 +162,7 @@ export class Paragraph extends EmbindObject {
   getLineMetricsOfRange(start: number, end: number): LineMetrics[] {
     let lineMetrics: LineMetrics[] = [];
     this._lineMetrics.forEach((it) => {
-      if (start <= it.startIndex && end >= it.endIndex) {
+      if (start >= it.startIndex && end <= it.endIndex) {
         lineMetrics.push(it);
       }
     });
@@ -256,5 +259,26 @@ export class Paragraph extends EmbindObject {
    */
   unresolvedCodepoints(): number[] {
     return [];
+  }
+
+  spansWithNewline(): Span[] {
+    let result: Span[] = [];
+    this.spans.forEach((span) => {
+      if (span instanceof TextSpan) {
+        if (span.text.indexOf("\n") >= 0) {
+          const components = span.text.split("\n");
+          for (let index = 0; index < components.length; index++) {
+            const component = components[index];
+            if (index > 0) {
+              result.push(new NewlineSpan());
+            }
+            result.push(new TextSpan(component, span.style));
+          }
+          return;
+        }
+      }
+      result.push(span);
+    });
+    return result;
   }
 }

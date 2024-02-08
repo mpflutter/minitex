@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.StrokeJoin = exports.StrokeCap = exports.TextBaseline = exports.PlaceholderAlignment = exports.EmbindObject = void 0;
+exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.StrokeJoin = exports.StrokeCap = exports.TextBaseline = exports.PlaceholderAlignment = exports.EmbindObject = void 0;
 class EmbindObject {
     constructor() {
         this._type = "";
@@ -43,8 +43,8 @@ var StrokeJoin;
 })(StrokeJoin || (exports.StrokeJoin = StrokeJoin = {}));
 var TextDirection;
 (function (TextDirection) {
-    TextDirection["LTR"] = "LTR";
-    TextDirection["RTL"] = "RTL";
+    TextDirection[TextDirection["RTL"] = 0] = "RTL";
+    TextDirection[TextDirection["LTR"] = 1] = "LTR";
 })(TextDirection || (exports.TextDirection = TextDirection = {}));
 var RectHeightStyle;
 (function (RectHeightStyle) {
@@ -65,3 +65,12 @@ var Affinity;
     Affinity["Upstream"] = "Upstream";
     Affinity["Downstream"] = "Downstream";
 })(Affinity || (exports.Affinity = Affinity = {}));
+var TextAlign;
+(function (TextAlign) {
+    TextAlign[TextAlign["Left"] = 0] = "Left";
+    TextAlign[TextAlign["Right"] = 1] = "Right";
+    TextAlign[TextAlign["Center"] = 2] = "Center";
+    TextAlign[TextAlign["Justify"] = 3] = "Justify";
+    TextAlign[TextAlign["Start"] = 4] = "Start";
+    TextAlign[TextAlign["End"] = 5] = "End";
+})(TextAlign || (exports.TextAlign = TextAlign = {}));

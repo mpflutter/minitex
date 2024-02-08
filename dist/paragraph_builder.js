@@ -4,13 +4,15 @@ exports.ParagraphBuilder = void 0;
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.EmbindObject {
-    constructor() {
-        super(...arguments);
+    static MakeFromFontCollection(style, fontCollection) {
+        console.log("MakeFromFontCollection", style, fontCollection);
+        return new ParagraphBuilder(style);
+    }
+    constructor(style) {
+        super();
+        this.style = style;
         this.spans = [];
         this.styles = [];
-    }
-    static MakeFromFontCollection() {
-        return new ParagraphBuilder();
     }
     /**
      * Pushes the information required to leave an open space.
@@ -29,6 +31,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param str
      */
     addText(str) {
+        console.log("addText", str);
         let mergedStyle = {};
         this.styles.forEach((it) => {
             Object.assign(mergedStyle, it);
@@ -41,7 +44,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * Canvas.
      */
     build() {
-        return new paragraph_1.Paragraph(this.spans);
+        return new paragraph_1.Paragraph(this.spans, this.style);
     }
     /**
      * @param words is an array of word edges (starting or ending). You can
@@ -121,6 +124,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * of text such as bolding.
      */
     pop() {
+        console.log("pop");
         this.styles.pop();
     }
     /**
@@ -129,6 +133,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param text
      */
     pushStyle(text) {
+        console.log("pushStyle", text);
         this.styles.push(text);
     }
     /**

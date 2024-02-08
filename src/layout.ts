@@ -1,4 +1,4 @@
-import { TextSpan, type Paragraph } from "./paragraph";
+import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
 import { LineMetrics } from "./skia";
 
 interface LetterMeasureResult {
@@ -6,12 +6,7 @@ interface LetterMeasureResult {
   width: number;
 }
 
-export class TextLayout {
-  constructor(
-    readonly paragraph: Paragraph,
-    readonly context: CanvasRenderingContext2D
-  ) {}
-
+class LetterMeasurer {
   private static LRUConfig = {
     maxCacheCount: 1000,
     minCacheCount: 200,
@@ -19,7 +14,7 @@ export class TextLayout {
 
   private static measureLRUCache: Record<string, LetterMeasureResult> = {};
 
-  private static measureLetters(
+  static measureLetters(
     span: TextSpan,
     context: CanvasRenderingContext2D
   ): number[] {
@@ -29,7 +24,6 @@ export class TextLayout {
       const letter = span.text[index];
       const wordWidth = (() => {
         if (isSquareCharacter(letter)) {
-          console.log("isSquareCharacter", letter);
           return this.measureSquareCharacter(context);
         } else {
           return this.measureNormalLetter(letter, context);
@@ -101,6 +95,13 @@ export class TextLayout {
         delete this.measureLRUCache[it];
       });
   }
+}
+
+export class TextLayout {
+  constructor(
+    readonly paragraph: Paragraph,
+    readonly context: CanvasRenderingContext2D
+  ) {}
 
   layout(layoutWidth: number): LineMetrics[] {
     let currentLineMetrics: LineMetrics = {
@@ -119,7 +120,8 @@ export class TextLayout {
       lineNumber: 0,
     };
     let lineMetrics: LineMetrics[] = [];
-    this.paragraph.spans.forEach((span) => {
+    const spans = this.paragraph.spansWithNewline();
+    spans.forEach((span) => {
       if (span instanceof TextSpan) {
         this.context.font = span.toCanvasFont();
         const matrics = this.context.measureText(span.text);
@@ -143,7 +145,7 @@ export class TextLayout {
         } else {
           let advances = (matrics as any).advances
             ? (matrics as any).advances
-            : TextLayout.measureLetters(span, this.context);
+            : LetterMeasurer.measureLetters(span, this.context);
           let currentWord = "";
           let currentWordWidth = 0;
           let currentWordLength = 0;
@@ -181,21 +183,8 @@ export class TextLayout {
               currentLineMetrics.width + currentWordWidth >=
               layoutWidth
             ) {
-              const newLineMatrics: LineMetrics = {
-                startIndex: currentLineMetrics.endIndex,
-                endIndex: currentLineMetrics.endIndex,
-                endExcludingWhitespaces: 0,
-                endIncludingNewline: 0,
-                isHardBreak: false,
-                ascent: currentLineMetrics.ascent,
-                descent: currentLineMetrics.descent,
-                height: currentLineMetrics.height,
-                width: 0,
-                left: 0,
-                yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
-                baseline: currentLineMetrics.baseline,
-                lineNumber: currentLineMetrics.lineNumber + 1,
-              };
+              const newLineMatrics: LineMetrics =
+                this.createNewLine(currentLineMetrics);
               lineMetrics.push(currentLineMetrics);
               currentLineMetrics = newLineMatrics;
               currentLineMetrics.width += currentWordWidth;
@@ -207,12 +196,46 @@ export class TextLayout {
             }
           }
         }
+      } else if (span instanceof NewlineSpan) {
+        const newLineMatrics: LineMetrics =
+          this.createNewLine(currentLineMetrics);
+        lineMetrics.push(currentLineMetrics);
+        currentLineMetrics = newLineMatrics;
+        const matrics = this.context.measureText("M");
+        if (!matrics.fontBoundingBoxAscent) {
+          const mHeight = this.context.measureText("M").width;
+          currentLineMetrics.ascent = mHeight * 1.15;
+          currentLineMetrics.descent = mHeight * 0.35;
+        } else {
+          currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
+          currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
+        }
+        currentLineMetrics.height = Math.max(
+          currentLineMetrics.height,
+          currentLineMetrics.ascent + currentLineMetrics.descent
+        );
       }
     });
-    if (currentLineMetrics.endIndex > currentLineMetrics.startIndex) {
-      lineMetrics.push(currentLineMetrics);
-    }
+    lineMetrics.push(currentLineMetrics);
     return lineMetrics;
+  }
+
+  private createNewLine(currentLineMetrics: LineMetrics): LineMetrics {
+    return {
+      startIndex: currentLineMetrics.endIndex,
+      endIndex: currentLineMetrics.endIndex,
+      endExcludingWhitespaces: 0,
+      endIncludingNewline: 0,
+      isHardBreak: false,
+      ascent: currentLineMetrics.ascent,
+      descent: currentLineMetrics.descent,
+      height: currentLineMetrics.height,
+      width: 0,
+      left: 0,
+      yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
+      baseline: currentLineMetrics.baseline,
+      lineNumber: currentLineMetrics.lineNumber + 1,
+    };
   }
 }
 

@@ -49,8 +49,8 @@ export enum StrokeJoin {
 }
 
 export enum TextDirection {
-  LTR = "LTR",
-  RTL = "RTL",
+  RTL = 0,
+  LTR = 1,
 }
 
 export enum RectHeightStyle {
@@ -183,4 +183,27 @@ export interface Typeface {
 export interface PositionWithAffinity {
   pos: number;
   affinity: Affinity;
+}
+
+export interface ParagraphStyle {
+  // disableHinting?: boolean;
+  // ellipsis?: string;
+  // heightMultiplier?: number;
+  // maxLines?: number;
+  // replaceTabCharacters?: boolean;
+  // strutStyle?: StrutStyle;
+  textAlign?: { value: TextAlign };
+  textDirection?: { value: TextDirection };
+  // textHeightBehavior?: TextHeightBehavior;
+  // textStyle?: TextStyle;
+  // applyRoundingHack?: boolean;
+}
+
+export enum TextAlign {
+  Left = 0,
+  Right = 1,
+  Center = 2,
+  Justify = 3,
+  Start = 4,
+  End = 5,
 }

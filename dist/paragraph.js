@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Paragraph = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
+exports.Paragraph = exports.NewlineSpan = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
 const drawer_1 = require("./drawer");
 const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
@@ -53,10 +53,14 @@ class TextSpan extends Span {
     }
 }
 exports.TextSpan = TextSpan;
+class NewlineSpan extends Span {
+}
+exports.NewlineSpan = NewlineSpan;
 class Paragraph extends skia_1.EmbindObject {
-    constructor(spans) {
+    constructor(spans, paragraphStyle) {
         super();
         this.spans = spans;
+        this.paragraphStyle = paragraphStyle;
         this._lineMetrics = [];
     }
     didExceedMaxLines() {
@@ -125,7 +129,7 @@ class Paragraph extends skia_1.EmbindObject {
     getLineMetricsOfRange(start, end) {
         let lineMetrics = [];
         this._lineMetrics.forEach((it) => {
-            if (start <= it.startIndex && end >= it.endIndex) {
+            if (start >= it.startIndex && end <= it.endIndex) {
                 lineMetrics.push(it);
             }
         });
@@ -206,6 +210,26 @@ class Paragraph extends skia_1.EmbindObject {
      */
     unresolvedCodepoints() {
         return [];
+    }
+    spansWithNewline() {
+        let result = [];
+        this.spans.forEach((span) => {
+            if (span instanceof TextSpan) {
+                if (span.text.indexOf("\n") >= 0) {
+                    const components = span.text.split("\n");
+                    for (let index = 0; index < components.length; index++) {
+                        const component = components[index];
+                        if (index > 0) {
+                            result.push(new NewlineSpan());
+                        }
+                        result.push(new TextSpan(component, span.style));
+                    }
+                    return;
+                }
+            }
+            result.push(span);
+        });
+        return result;
     }
 }
 exports.Paragraph = Paragraph;

@@ -2,11 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TextLayout = void 0;
 const paragraph_1 = require("./paragraph");
-class TextLayout {
-    constructor(paragraph, context) {
-        this.paragraph = paragraph;
-        this.context = context;
-    }
+class LetterMeasurer {
     static measureLetters(span, context) {
         let result = [0];
         let curPosWidth = 0;
@@ -14,7 +10,6 @@ class TextLayout {
             const letter = span.text[index];
             const wordWidth = (() => {
                 if (isSquareCharacter(letter)) {
-                    console.log("isSquareCharacter", letter);
                     return this.measureSquareCharacter(context);
                 }
                 else {
@@ -69,6 +64,17 @@ class TextLayout {
             delete this.measureLRUCache[it];
         });
     }
+}
+LetterMeasurer.LRUConfig = {
+    maxCacheCount: 1000,
+    minCacheCount: 200,
+};
+LetterMeasurer.measureLRUCache = {};
+class TextLayout {
+    constructor(paragraph, context) {
+        this.paragraph = paragraph;
+        this.context = context;
+    }
     layout(layoutWidth) {
         let currentLineMetrics = {
             startIndex: 0,
@@ -86,7 +92,8 @@ class TextLayout {
             lineNumber: 0,
         };
         let lineMetrics = [];
-        this.paragraph.spans.forEach((span) => {
+        const spans = this.paragraph.spansWithNewline();
+        spans.forEach((span) => {
             var _a;
             if (span instanceof paragraph_1.TextSpan) {
                 this.context.font = span.toCanvasFont();
@@ -109,7 +116,7 @@ class TextLayout {
                 else {
                     let advances = matrics.advances
                         ? matrics.advances
-                        : TextLayout.measureLetters(span, this.context);
+                        : LetterMeasurer.measureLetters(span, this.context);
                     let currentWord = "";
                     let currentWordWidth = 0;
                     let currentWordLength = 0;
@@ -143,21 +150,7 @@ class TextLayout {
                         }
                         else if (currentLineMetrics.width + currentWordWidth >=
                             layoutWidth) {
-                            const newLineMatrics = {
-                                startIndex: currentLineMetrics.endIndex,
-                                endIndex: currentLineMetrics.endIndex,
-                                endExcludingWhitespaces: 0,
-                                endIncludingNewline: 0,
-                                isHardBreak: false,
-                                ascent: currentLineMetrics.ascent,
-                                descent: currentLineMetrics.descent,
-                                height: currentLineMetrics.height,
-                                width: 0,
-                                left: 0,
-                                yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
-                                baseline: currentLineMetrics.baseline,
-                                lineNumber: currentLineMetrics.lineNumber + 1,
-                            };
+                            const newLineMatrics = this.createNewLine(currentLineMetrics);
                             lineMetrics.push(currentLineMetrics);
                             currentLineMetrics = newLineMatrics;
                             currentLineMetrics.width += currentWordWidth;
@@ -170,19 +163,45 @@ class TextLayout {
                     }
                 }
             }
+            else if (span instanceof paragraph_1.NewlineSpan) {
+                const newLineMatrics = this.createNewLine(currentLineMetrics);
+                lineMetrics.push(currentLineMetrics);
+                currentLineMetrics = newLineMatrics;
+                const matrics = this.context.measureText("M");
+                if (!matrics.fontBoundingBoxAscent) {
+                    const mHeight = this.context.measureText("M").width;
+                    currentLineMetrics.ascent = mHeight * 1.15;
+                    currentLineMetrics.descent = mHeight * 0.35;
+                }
+                else {
+                    currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
+                    currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
+                }
+                currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
+            }
         });
-        if (currentLineMetrics.endIndex > currentLineMetrics.startIndex) {
-            lineMetrics.push(currentLineMetrics);
-        }
+        lineMetrics.push(currentLineMetrics);
         return lineMetrics;
+    }
+    createNewLine(currentLineMetrics) {
+        return {
+            startIndex: currentLineMetrics.endIndex,
+            endIndex: currentLineMetrics.endIndex,
+            endExcludingWhitespaces: 0,
+            endIncludingNewline: 0,
+            isHardBreak: false,
+            ascent: currentLineMetrics.ascent,
+            descent: currentLineMetrics.descent,
+            height: currentLineMetrics.height,
+            width: 0,
+            left: 0,
+            yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
+            baseline: currentLineMetrics.baseline,
+            lineNumber: currentLineMetrics.lineNumber + 1,
+        };
     }
 }
 exports.TextLayout = TextLayout;
-TextLayout.LRUConfig = {
-    maxCacheCount: 1000,
-    minCacheCount: 200,
-};
-TextLayout.measureLRUCache = {};
 function isEnglishWord(str) {
     const englishRegex = /^[A-Za-z]+$/;
     const result = englishRegex.test(str);

@@ -5,14 +5,20 @@ import {
   InputGraphemes,
   InputLineBreaks,
   InputWords,
+  ParagraphStyle,
   PlaceholderAlignment,
   TextBaseline,
 } from "./skia";
 import { TextStyle } from "./text_style";
 
 export class ParagraphBuilder extends EmbindObject {
-  static MakeFromFontCollection() {
-    return new ParagraphBuilder();
+  static MakeFromFontCollection(style: ParagraphStyle, fontCollection: any) {
+    console.log("MakeFromFontCollection", style, fontCollection);
+    return new ParagraphBuilder(style);
+  }
+
+  constructor(readonly style: ParagraphStyle) {
+    super();
   }
 
   private spans: Span[] = [];
@@ -42,6 +48,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param str
    */
   addText(str: string): void {
+    console.log("addText", str);
     let mergedStyle: TextStyle = {};
     this.styles.forEach((it) => {
       Object.assign(mergedStyle, it);
@@ -55,7 +62,7 @@ export class ParagraphBuilder extends EmbindObject {
    * Canvas.
    */
   build(): Paragraph {
-    return new Paragraph(this.spans);
+    return new Paragraph(this.spans, this.style);
   }
 
   /**
@@ -140,6 +147,7 @@ export class ParagraphBuilder extends EmbindObject {
    * of text such as bolding.
    */
   pop(): void {
+    console.log("pop");
     this.styles.pop();
   }
 
@@ -149,6 +157,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param text
    */
   pushStyle(text: TextStyle): void {
+    console.log("pushStyle", text);
     this.styles.push(text);
   }
 
