@@ -184,7 +184,10 @@ export class Paragraph extends EmbindObject {
   getLineMetricsOfRange(start: number, end: number): LineMetrics[] {
     let lineMetrics: LineMetrics[] = [];
     this._lineMetrics.forEach((it) => {
-      if (start >= it.startIndex && end <= it.endIndex) {
+      const range0 = [start, end];
+      const range1 = [it.startIndex, it.endIndex];
+      const hasIntersection = range0[1] >= range1[0] && range1[1] >= range0[0];
+      if (hasIntersection) {
         lineMetrics.push(it);
       }
     });

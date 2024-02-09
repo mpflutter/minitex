@@ -47,12 +47,6 @@ class Drawer {
             if (span instanceof paragraph_1.TextSpan) {
                 let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
-                // console.log(
-                //   "lineMetrics",
-                //   spanLetterStartIndex,
-                //   spanLetterEndIndex,
-                //   lineMetrics
-                // );
                 context.font = span.toCanvasFont();
                 context.fillStyle = span.toCanvasFillStyle();
                 let currentDrawStartPosition = 0;
@@ -62,8 +56,9 @@ class Drawer {
                     let currentLineMetrics;
                     for (let index = 0; index < lineMetrics.length; index++) {
                         const line = lineMetrics[index];
-                        if (spanLetterStartIndex >= line.startIndex &&
-                            spanLetterStartIndex < line.endIndex) {
+                        if (spanLetterStartIndex + currentDrawStartPosition >=
+                            line.startIndex &&
+                            spanLetterStartIndex + currentDrawStartPosition < line.endIndex) {
                             currentLineMetrics = line;
                             currentDrawEndPosition += Math.min(span.text.length, line.endIndex - spanLetterStartIndex);
                             break;
@@ -77,7 +72,6 @@ class Drawer {
                                 undefined) {
                                 const textAlign = (_a = this.paragraph.paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value;
                                 const textDirection = (_b = this.paragraph.paragraphStyle.textDirection) === null || _b === void 0 ? void 0 : _b.value;
-                                console.log("textAligntextAlign", textAlign);
                                 if (textAlign === skia_1.TextAlign.Center) {
                                     linesDrawingRightBounds[currentLineMetrics.lineNumber] =
                                         (this.paragraph.getMaxWidth() - currentLineMetrics.width) /

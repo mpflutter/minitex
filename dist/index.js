@@ -19,8 +19,6 @@ class MiniTex {
             }
             else {
                 originDrawParagraphMethod.apply(this, [paragraph, dx, dy]);
-                // console.log("thisthisthis", this);
-                // originDrawParagraphMethod(paragraph, dx, dy);
             }
         };
     }

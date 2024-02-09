@@ -61,12 +61,6 @@ export class Drawer {
           spanLetterStartIndex,
           spanLetterEndIndex
         );
-        // console.log(
-        //   "lineMetrics",
-        //   spanLetterStartIndex,
-        //   spanLetterEndIndex,
-        //   lineMetrics
-        // );
         context.font = span.toCanvasFont();
         context.fillStyle = span.toCanvasFillStyle();
         let currentDrawStartPosition = 0;
@@ -79,8 +73,9 @@ export class Drawer {
           for (let index = 0; index < lineMetrics.length; index++) {
             const line = lineMetrics[index];
             if (
-              spanLetterStartIndex >= line.startIndex &&
-              spanLetterStartIndex < line.endIndex
+              spanLetterStartIndex + currentDrawStartPosition >=
+                line.startIndex &&
+              spanLetterStartIndex + currentDrawStartPosition < line.endIndex
             ) {
               currentLineMetrics = line;
               currentDrawEndPosition += Math.min(
@@ -104,7 +99,6 @@ export class Drawer {
                   this.paragraph.paragraphStyle.textAlign?.value;
                 const textDirection =
                   this.paragraph.paragraphStyle.textDirection?.value;
-                console.log("textAligntextAlign", textAlign);
                 if (textAlign === TextAlign.Center) {
                   linesDrawingRightBounds[currentLineMetrics!.lineNumber] =
                     (this.paragraph.getMaxWidth() - currentLineMetrics!.width) /
