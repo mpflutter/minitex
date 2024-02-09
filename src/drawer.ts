@@ -5,23 +5,13 @@ import { LineMetrics, TextAlign, TextDirection } from "./skia";
 
 export class Drawer {
   static pixelRatio = 1.0;
-  static sharedLayoutCanvas: HTMLCanvasElement;
-  static sharedLayoutContext: CanvasRenderingContext2D;
   static sharedRenderCanvas: HTMLCanvasElement;
   static sharedRenderContext: CanvasRenderingContext2D;
 
   constructor(readonly paragraph: Paragraph) {}
 
   private initCanvas() {
-    if (!Drawer.sharedLayoutCanvas) {
-      Drawer.sharedLayoutCanvas = wx.createOffscreenCanvas({
-        type: "2d",
-        width: 1,
-        height: 1,
-      });
-      Drawer.sharedLayoutContext = Drawer.sharedLayoutCanvas!.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
+    if (!Drawer.sharedRenderCanvas) {
       Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
         type: "2d",
         width: 1000 * Drawer.pixelRatio,
@@ -31,13 +21,6 @@ export class Drawer {
         "2d"
       ) as CanvasRenderingContext2D;
     }
-  }
-
-  layout(width: number): void {
-    this.initCanvas();
-
-    const layouter = new TextLayout(this.paragraph, Drawer.sharedLayoutContext);
-    this.paragraph._lineMetrics = layouter.layout(width);
   }
 
   draw(): ImageData {

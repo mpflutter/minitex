@@ -71,11 +71,22 @@ LetterMeasurer.LRUConfig = {
 };
 LetterMeasurer.measureLRUCache = {};
 class TextLayout {
-    constructor(paragraph, context) {
+    constructor(paragraph) {
         this.paragraph = paragraph;
-        this.context = context;
+    }
+    initCanvas() {
+        if (!TextLayout.sharedLayoutCanvas) {
+            TextLayout.sharedLayoutCanvas = wx.createOffscreenCanvas({
+                type: "2d",
+                width: 1,
+                height: 1,
+            });
+            TextLayout.sharedLayoutContext =
+                TextLayout.sharedLayoutCanvas.getContext("2d");
+        }
     }
     layout(layoutWidth) {
+        this.initCanvas();
         let currentLineMetrics = {
             startIndex: 0,
             endIndex: 0,
@@ -96,10 +107,10 @@ class TextLayout {
         spans.forEach((span) => {
             var _a;
             if (span instanceof paragraph_1.TextSpan) {
-                this.context.font = span.toCanvasFont();
-                const matrics = this.context.measureText(span.text);
+                TextLayout.sharedLayoutContext.font = span.toCanvasFont();
+                const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
                 if (!matrics.fontBoundingBoxAscent) {
-                    const mHeight = this.context.measureText("M").width;
+                    const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
                     currentLineMetrics.ascent = mHeight * 1.15;
                     currentLineMetrics.descent = mHeight * 0.35;
                 }
@@ -116,7 +127,7 @@ class TextLayout {
                 else {
                     let advances = matrics.advances
                         ? matrics.advances
-                        : LetterMeasurer.measureLetters(span, this.context);
+                        : LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
                     let currentWord = "";
                     let currentWordWidth = 0;
                     let currentWordLength = 0;
@@ -167,9 +178,9 @@ class TextLayout {
                 const newLineMatrics = this.createNewLine(currentLineMetrics);
                 lineMetrics.push(currentLineMetrics);
                 currentLineMetrics = newLineMatrics;
-                const matrics = this.context.measureText("M");
+                const matrics = TextLayout.sharedLayoutContext.measureText("M");
                 if (!matrics.fontBoundingBoxAscent) {
-                    const mHeight = this.context.measureText("M").width;
+                    const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
                     currentLineMetrics.ascent = mHeight * 1.15;
                     currentLineMetrics.descent = mHeight * 0.35;
                 }
@@ -181,7 +192,7 @@ class TextLayout {
             }
         });
         lineMetrics.push(currentLineMetrics);
-        return lineMetrics;
+        this.paragraph._lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
         return {

@@ -1,4 +1,5 @@
 import { Drawer } from "./drawer";
+import { TextLayout } from "./layout";
 import {
   Affinity,
   EmbindObject,
@@ -275,7 +276,7 @@ export class Paragraph extends EmbindObject {
    * @param width
    */
   layout(width: number): void {
-    new Drawer(this).layout(width);
+    new TextLayout(this).layout(width);
   }
 
   /**

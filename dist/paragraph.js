@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Paragraph = exports.NewlineSpan = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
 const drawer_1 = require("./drawer");
+const layout_1 = require("./layout");
 const skia_1 = require("./skia");
 const text_style_1 = require("./text_style");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
@@ -229,7 +230,7 @@ class Paragraph extends skia_1.EmbindObject {
      * @param width
      */
     layout(width) {
-        new drawer_1.Drawer(this).layout(width);
+        new layout_1.TextLayout(this).layout(width);
     }
     /**
      * When called after shaping, returns the glyph IDs which were not matched

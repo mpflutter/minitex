@@ -1,3 +1,4 @@
+declare var wx: any;
 import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
 import { LineMetrics } from "./skia";
 
@@ -98,12 +99,27 @@ class LetterMeasurer {
 }
 
 export class TextLayout {
-  constructor(
-    readonly paragraph: Paragraph,
-    readonly context: CanvasRenderingContext2D
-  ) {}
+  static sharedLayoutCanvas: HTMLCanvasElement;
+  static sharedLayoutContext: CanvasRenderingContext2D;
 
-  layout(layoutWidth: number): LineMetrics[] {
+  constructor(readonly paragraph: Paragraph) {}
+
+  private initCanvas() {
+    if (!TextLayout.sharedLayoutCanvas) {
+      TextLayout.sharedLayoutCanvas = wx.createOffscreenCanvas({
+        type: "2d",
+        width: 1,
+        height: 1,
+      });
+      TextLayout.sharedLayoutContext =
+        TextLayout.sharedLayoutCanvas!.getContext(
+          "2d"
+        ) as CanvasRenderingContext2D;
+    }
+  }
+
+  layout(layoutWidth: number): void {
+    this.initCanvas();
     let currentLineMetrics: LineMetrics = {
       startIndex: 0,
       endIndex: 0,
@@ -123,10 +139,10 @@ export class TextLayout {
     const spans = this.paragraph.spansWithNewline();
     spans.forEach((span) => {
       if (span instanceof TextSpan) {
-        this.context.font = span.toCanvasFont();
-        const matrics = this.context.measureText(span.text);
+        TextLayout.sharedLayoutContext.font = span.toCanvasFont();
+        const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
         if (!matrics.fontBoundingBoxAscent) {
-          const mHeight = this.context.measureText("M").width;
+          const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
           currentLineMetrics.ascent = mHeight * 1.15;
           currentLineMetrics.descent = mHeight * 0.35;
         } else {
@@ -145,7 +161,10 @@ export class TextLayout {
         } else {
           let advances = (matrics as any).advances
             ? (matrics as any).advances
-            : LetterMeasurer.measureLetters(span, this.context);
+            : LetterMeasurer.measureLetters(
+                span,
+                TextLayout.sharedLayoutContext
+              );
           let currentWord = "";
           let currentWordWidth = 0;
           let currentWordLength = 0;
@@ -201,9 +220,9 @@ export class TextLayout {
           this.createNewLine(currentLineMetrics);
         lineMetrics.push(currentLineMetrics);
         currentLineMetrics = newLineMatrics;
-        const matrics = this.context.measureText("M");
+        const matrics = TextLayout.sharedLayoutContext.measureText("M");
         if (!matrics.fontBoundingBoxAscent) {
-          const mHeight = this.context.measureText("M").width;
+          const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
           currentLineMetrics.ascent = mHeight * 1.15;
           currentLineMetrics.descent = mHeight * 0.35;
         } else {
@@ -217,7 +236,7 @@ export class TextLayout {
       }
     });
     lineMetrics.push(currentLineMetrics);
-    return lineMetrics;
+    this.paragraph._lineMetrics = lineMetrics;
   }
 
   private createNewLine(currentLineMetrics: LineMetrics): LineMetrics {

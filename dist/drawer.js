@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drawer = void 0;
-const layout_1 = require("./layout");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class Drawer {
@@ -9,13 +8,7 @@ class Drawer {
         this.paragraph = paragraph;
     }
     initCanvas() {
-        if (!Drawer.sharedLayoutCanvas) {
-            Drawer.sharedLayoutCanvas = wx.createOffscreenCanvas({
-                type: "2d",
-                width: 1,
-                height: 1,
-            });
-            Drawer.sharedLayoutContext = Drawer.sharedLayoutCanvas.getContext("2d");
+        if (!Drawer.sharedRenderCanvas) {
             Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
                 type: "2d",
                 width: 1000 * Drawer.pixelRatio,
@@ -23,11 +16,6 @@ class Drawer {
             });
             Drawer.sharedRenderContext = Drawer.sharedRenderCanvas.getContext("2d");
         }
-    }
-    layout(width) {
-        this.initCanvas();
-        const layouter = new layout_1.TextLayout(this.paragraph, Drawer.sharedLayoutContext);
-        this.paragraph._lineMetrics = layouter.layout(width);
     }
     draw() {
         this.initCanvas();
