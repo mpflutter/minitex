@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FontSlant = exports.FontWidth = exports.FontWeight = void 0;
+exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = void 0;
+exports.NoDecoration = 0;
+exports.UnderlineDecoration = 1;
+exports.OverlineDecoration = 2;
+exports.LineThroughDecoration = 4;
 var FontWeight;
 (function (FontWeight) {
     FontWeight[FontWeight["Invisible"] = 0] = "Invisible";
@@ -33,3 +37,11 @@ var FontSlant;
     FontSlant[FontSlant["Italic"] = 1] = "Italic";
     FontSlant[FontSlant["Oblique"] = 2] = "Oblique";
 })(FontSlant || (exports.FontSlant = FontSlant = {}));
+var DecorationStyle;
+(function (DecorationStyle) {
+    DecorationStyle[DecorationStyle["Solid"] = 0] = "Solid";
+    DecorationStyle[DecorationStyle["Double"] = 1] = "Double";
+    DecorationStyle[DecorationStyle["Dotted"] = 2] = "Dotted";
+    DecorationStyle[DecorationStyle["Dashed"] = 3] = "Dashed";
+    DecorationStyle[DecorationStyle["Wavy"] = 4] = "Wavy";
+})(DecorationStyle || (exports.DecorationStyle = DecorationStyle = {}));

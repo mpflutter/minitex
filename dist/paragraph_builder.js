@@ -137,11 +137,11 @@ class ParagraphBuilder extends skia_1.EmbindObject {
     /**
      * Push a style to the stack. The corresponding text added with addText will
      * use the top-most style.
-     * @param text
+     * @param textStyle
      */
-    pushStyle(text) {
-        console.log("pushStyle", text);
-        this.styles.push(text);
+    pushStyle(textStyle) {
+        console.log("pushStyle", textStyle);
+        this.styles.push(textStyle);
     }
     /**
      * Pushes a TextStyle using paints instead of colors for foreground and background.
@@ -151,6 +151,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      */
     pushPaintStyle(textStyle, fg, bg) {
         console.log("pushPaintStyle", textStyle, fg, bg);
+        this.styles.push(textStyle);
     }
     /**
      * Resets this builder to its initial state, discarding any text, styles, placeholders that have

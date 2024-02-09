@@ -198,8 +198,8 @@ export interface ParagraphStyle {
   // maxLines?: number;
   // replaceTabCharacters?: boolean;
   // strutStyle?: StrutStyle;
-  textAlign?: { value: TextAlign };
-  textDirection?: { value: TextDirection };
+  textAlign?: SkEnum<TextAlign>;
+  textDirection?: SkEnum<TextDirection>;
   // textHeightBehavior?: TextHeightBehavior;
   textStyle?: TextStyle;
   // applyRoundingHack?: boolean;

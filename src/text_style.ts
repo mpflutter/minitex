@@ -1,12 +1,17 @@
 import { InputColor, SkEnum } from "./skia";
 
+export const NoDecoration = 0;
+export const UnderlineDecoration = 1;
+export const OverlineDecoration = 2;
+export const LineThroughDecoration = 4;
+
 export interface TextStyle {
   backgroundColor?: InputColor;
   color?: InputColor;
   decoration?: number;
   decorationColor?: InputColor;
   decorationThickness?: number;
-  // decorationStyle?: DecorationStyle;
+  decorationStyle?: SkEnum<DecorationStyle>;
   fontFamilies?: string[];
   // fontFeatures?: TextFontFeatures[];
   fontSize?: number;
@@ -55,7 +60,15 @@ export enum FontWidth {
 }
 
 export enum FontSlant {
-  Upright = 0,
-  Italic = 1,
-  Oblique = 2,
+  Upright,
+  Italic,
+  Oblique,
+}
+
+export enum DecorationStyle {
+  Solid,
+  Double,
+  Dotted,
+  Dashed,
+  Wavy,
 }

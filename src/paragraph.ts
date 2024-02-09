@@ -54,28 +54,32 @@ export class TextSpan extends Span {
     super();
   }
 
-  toCanvasFillStyle(): string {
-    const rgbaColor = this.style.color as Float32Array;
-    const r = Math.round(rgbaColor[0] * 255).toString(16);
-    const g = Math.round(rgbaColor[1] * 255).toString(16);
-    const b = Math.round(rgbaColor[2] * 255).toString(16);
-    const a = Math.round(rgbaColor[3] * 255).toString(16);
-    const padHex = (hex: string) => (hex.length === 1 ? "0" + hex : hex);
-    const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
-    return hexColor;
+  toBackgroundFillStyle(): string {
+    if (this.style.backgroundColor) {
+      return this.colorToHex(this.style.backgroundColor as Float32Array);
+    } else {
+      return "#000000";
+    }
+  }
+
+  toTextFillStyle(): string {
+    if (this.style.color) {
+      return this.colorToHex(this.style.color as Float32Array);
+    } else {
+      return "#000000";
+    }
+  }
+
+  toDecorationStrokeStyle(): string {
+    if (this.style.decorationColor) {
+      return this.colorToHex(this.style.decorationColor as Float32Array);
+    } else {
+      return "#000000";
+    }
   }
 
   toCanvasFont(): string {
-    let font = `${this.style.fontSize}px `;
-    if (this.style.fontFamilies) {
-      // this.style.fontFamilies.forEach((it, idx) => {
-      //   if (idx > 0) {
-      //     font += ",";
-      //   }
-      //   font += `"${it}"`;
-      // });
-      font += "system-ui";
-    }
+    let font = `${this.style.fontSize}px system-ui`;
     const fontWeight = this.style.fontStyle?.weight?.value;
     if (fontWeight && fontWeight !== 400) {
       if (fontWeight >= 900) {
@@ -96,6 +100,16 @@ export class TextSpan extends Span {
       }
     }
     return font;
+  }
+
+  colorToHex(rgbaColor: Float32Array): string {
+    const r = Math.round(rgbaColor[0] * 255).toString(16);
+    const g = Math.round(rgbaColor[1] * 255).toString(16);
+    const b = Math.round(rgbaColor[2] * 255).toString(16);
+    const a = Math.round(rgbaColor[3] * 255).toString(16);
+    const padHex = (hex: string) => (hex.length === 1 ? "0" + hex : hex);
+    const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
+    return hexColor;
   }
 }
 

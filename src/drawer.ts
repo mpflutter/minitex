@@ -2,6 +2,12 @@ declare var wx: any;
 import { TextLayout } from "./layout";
 import { Paragraph, TextSpan } from "./paragraph";
 import { LineMetrics, TextAlign, TextDirection } from "./skia";
+import {
+  DecorationStyle,
+  LineThroughDecoration,
+  OverlineDecoration,
+  UnderlineDecoration,
+} from "./text_style";
 
 export class Drawer {
   static pixelRatio = 1.0;
@@ -45,7 +51,6 @@ export class Drawer {
           spanLetterEndIndex
         );
         context.font = span.toCanvasFont();
-        context.fillStyle = span.toCanvasFillStyle();
         let currentDrawStartPosition = 0;
         let currentDrawEndPosition = 0;
         while (
@@ -68,14 +73,17 @@ export class Drawer {
               break;
             }
           }
-          if (currentDrawEndPosition > currentDrawStartPosition) {
+          if (
+            currentLineMetrics &&
+            currentDrawEndPosition > currentDrawStartPosition
+          ) {
             const drawingText = span.text.substring(
               currentDrawStartPosition,
               currentDrawEndPosition
             );
             const drawingLeft = (() => {
               if (
-                linesDrawingRightBounds[currentLineMetrics!.lineNumber] ===
+                linesDrawingRightBounds[currentLineMetrics.lineNumber] ===
                 undefined
               ) {
                 const textAlign =
@@ -83,8 +91,8 @@ export class Drawer {
                 const textDirection =
                   this.paragraph.paragraphStyle.textDirection?.value;
                 if (textAlign === TextAlign.Center) {
-                  linesDrawingRightBounds[currentLineMetrics!.lineNumber] =
-                    (this.paragraph.getMaxWidth() - currentLineMetrics!.width) /
+                  linesDrawingRightBounds[currentLineMetrics.lineNumber] =
+                    (this.paragraph.getMaxWidth() - currentLineMetrics.width) /
                     2.0;
                 } else if (
                   textAlign === TextAlign.Right ||
@@ -93,23 +101,120 @@ export class Drawer {
                   (textAlign === TextAlign.Start &&
                     textDirection === TextDirection.RTL)
                 ) {
-                  linesDrawingRightBounds[currentLineMetrics!.lineNumber] =
-                    this.paragraph.getMaxWidth() - currentLineMetrics!.width;
+                  linesDrawingRightBounds[currentLineMetrics.lineNumber] =
+                    this.paragraph.getMaxWidth() - currentLineMetrics.width;
                 } else {
-                  linesDrawingRightBounds[currentLineMetrics!.lineNumber] = 0;
+                  linesDrawingRightBounds[currentLineMetrics.lineNumber] = 0;
                 }
               }
-              return linesDrawingRightBounds[currentLineMetrics!.lineNumber];
+              return linesDrawingRightBounds[currentLineMetrics.lineNumber];
             })();
             const drawingRight =
               drawingLeft + context.measureText(drawingText).width;
-            linesDrawingRightBounds[currentLineMetrics!.lineNumber] =
+            linesDrawingRightBounds[currentLineMetrics.lineNumber] =
               drawingRight;
+
+            // draw background
+            if (span.style.backgroundColor) {
+              context.fillStyle = span.toBackgroundFillStyle();
+              context.fillRect(
+                drawingLeft,
+                currentLineMetrics.yOffset,
+                drawingRight - drawingLeft,
+                currentLineMetrics.height
+              );
+            }
+
+            // draw text
+            context.fillStyle = span.toTextFillStyle();
             context.fillText(
               drawingText,
               drawingLeft,
-              currentLineMetrics!.ascent + currentLineMetrics!.yOffset
+              currentLineMetrics.ascent + currentLineMetrics.yOffset
             );
+
+            // draw decoration
+            if (span.style.decoration) {
+              context.save();
+              context.strokeStyle = span.toDecorationStrokeStyle();
+              context.lineWidth =
+                (span.style.decorationThickness ?? 1) *
+                Math.max(1, (span.style.fontSize ?? 12) / 14);
+              const decorationStyle = span.style.decorationStyle?.value;
+
+              switch (decorationStyle) {
+                case DecorationStyle.Dashed:
+                  context.lineCap = "butt";
+                  context.setLineDash([10, 4]);
+                  break;
+                case DecorationStyle.Dotted:
+                  context.lineCap = "butt";
+                  context.setLineDash([4, 4]);
+                  break;
+              }
+
+              if (span.style.decoration & UnderlineDecoration) {
+                context.beginPath();
+                context.moveTo(
+                  drawingLeft,
+                  currentLineMetrics.yOffset + currentLineMetrics.ascent + 2
+                );
+                context.lineTo(
+                  drawingRight,
+                  currentLineMetrics.yOffset + currentLineMetrics.ascent + 2
+                );
+                if (decorationStyle === DecorationStyle.Double) {
+                  context.moveTo(
+                    drawingLeft,
+                    currentLineMetrics.yOffset + currentLineMetrics.ascent + 4
+                  );
+                  context.lineTo(
+                    drawingRight,
+                    currentLineMetrics.yOffset + currentLineMetrics.ascent + 4
+                  );
+                }
+                context.stroke();
+              }
+              if (span.style.decoration & LineThroughDecoration) {
+                context.beginPath();
+                context.moveTo(
+                  drawingLeft,
+                  currentLineMetrics.yOffset + currentLineMetrics.height / 2.0
+                );
+                context.lineTo(
+                  drawingRight,
+                  currentLineMetrics.yOffset + currentLineMetrics.height / 2.0
+                );
+                if (decorationStyle === DecorationStyle.Double) {
+                  context.moveTo(
+                    drawingLeft,
+                    currentLineMetrics.yOffset +
+                      currentLineMetrics.height / 2.0 +
+                      2
+                  );
+                  context.lineTo(
+                    drawingRight,
+                    currentLineMetrics.yOffset +
+                      currentLineMetrics.height / 2.0 +
+                      2
+                  );
+                }
+                context.stroke();
+              }
+              if (span.style.decoration & OverlineDecoration) {
+                context.beginPath();
+                context.moveTo(drawingLeft, currentLineMetrics.yOffset);
+                context.lineTo(drawingRight, currentLineMetrics.yOffset);
+
+                if (decorationStyle === DecorationStyle.Double) {
+                  context.moveTo(drawingLeft, currentLineMetrics.yOffset + 2);
+                  context.lineTo(drawingRight, currentLineMetrics.yOffset + 2);
+                }
+                context.stroke();
+              }
+              context.restore();
+            }
+
             currentDrawStartPosition = currentDrawEndPosition;
             currentDrawEndPosition = currentDrawStartPosition;
           } else {

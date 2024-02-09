@@ -167,11 +167,11 @@ export class ParagraphBuilder extends EmbindObject {
   /**
    * Push a style to the stack. The corresponding text added with addText will
    * use the top-most style.
-   * @param text
+   * @param textStyle
    */
-  pushStyle(text: TextStyle): void {
-    console.log("pushStyle", text);
-    this.styles.push(text);
+  pushStyle(textStyle: TextStyle): void {
+    console.log("pushStyle", textStyle);
+    this.styles.push(textStyle);
   }
 
   /**
@@ -182,6 +182,7 @@ export class ParagraphBuilder extends EmbindObject {
    */
   pushPaintStyle(textStyle: TextStyle, fg: Paint, bg: Paint): void {
     console.log("pushPaintStyle", textStyle, fg, bg);
+    this.styles.push(textStyle);
   }
 
   /**
