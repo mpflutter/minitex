@@ -168,7 +168,9 @@ export class TextLayout {
           let currentWord = "";
           let currentWordWidth = 0;
           let currentWordLength = 0;
+          let nextWordWidth = 0;
           let canBreak = true;
+          let forceBreak = false;
 
           for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
@@ -179,18 +181,31 @@ export class TextLayout {
             } else {
               currentWordWidth += advances[index + 1] - advances[index];
             }
+            if (advances[index + 2] === undefined) {
+              nextWordWidth = currentWordWidth;
+            } else {
+              nextWordWidth =
+                currentWordWidth + (advances[index + 2] - advances[index + 1]);
+            }
             currentWordLength += 1;
             canBreak = true;
+            forceBreak = false;
 
             if (isEnglishWord(nextWord)) {
               canBreak = false;
+            }
+            if (
+              isPunctuation(nextWord[nextWord.length - 1]) &&
+              currentLineMetrics.width + nextWordWidth >= layoutWidth
+            ) {
+              forceBreak = true;
             }
 
             if (!canBreak) {
               continue;
             } else if (
-              currentLineMetrics.width + currentWordWidth <
-              layoutWidth
+              !forceBreak &&
+              currentLineMetrics.width + currentWordWidth < layoutWidth
             ) {
               currentLineMetrics.width += currentWordWidth;
               currentLineMetrics.endIndex += currentWordLength;
@@ -199,8 +214,8 @@ export class TextLayout {
               currentWordLength = 0;
               canBreak = true;
             } else if (
-              currentLineMetrics.width + currentWordWidth >=
-              layoutWidth
+              forceBreak ||
+              currentLineMetrics.width + currentWordWidth >= layoutWidth
             ) {
               const newLineMatrics: LineMetrics =
                 this.createNewLine(currentLineMetrics);
@@ -236,6 +251,7 @@ export class TextLayout {
       }
     });
     lineMetrics.push(currentLineMetrics);
+    console.log("lineMetricslineMetrics", lineMetrics);
     this.paragraph._lineMetrics = lineMetrics;
   }
 
@@ -267,4 +283,55 @@ function isEnglishWord(str: string) {
 function isSquareCharacter(str: string) {
   const squareCharacterRange = /[\u4e00-\u9fa5]/;
   return squareCharacterRange.test(str);
+}
+
+const mapOfPunctuation: Record<string, number> = {
+  "！": 1,
+  "？": 1,
+  "｡": 1,
+  "，": 1,
+  "、": 1,
+  "“": 1,
+  "”": 1,
+  "‘": 1,
+  "’": 1,
+  "；": 1,
+  "：": 1,
+  "【": 1,
+  "】": 1,
+  "『": 1,
+  "』": 1,
+  "（": 1,
+  "）": 1,
+  "《": 1,
+  "》": 1,
+  "〈": 1,
+  "〉": 1,
+  "〔": 1,
+  "〕": 1,
+  "［": 1,
+  "］": 1,
+  "｛": 1,
+  "｝": 1,
+  "〖": 1,
+  "〗": 1,
+  "〘": 1,
+  "〙": 1,
+  "〚": 1,
+  "〛": 1,
+  "〝": 1,
+  "〞": 1,
+  "〟": 1,
+  "﹏": 1,
+  "…": 1,
+  "—": 1,
+  "～": 1,
+  "·": 1,
+  "•": 1,
+  ",": 1,
+  ".": 1,
+};
+
+function isPunctuation(char: string) {
+  return mapOfPunctuation[char] === 1;
 }
