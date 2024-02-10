@@ -251,7 +251,18 @@ export class TextLayout {
       }
     });
     lineMetrics.push(currentLineMetrics);
-    console.log("lineMetricslineMetrics", lineMetrics);
+    if (
+      this.paragraph.paragraphStyle.maxLines &&
+      lineMetrics.length > this.paragraph.paragraphStyle.maxLines
+    ) {
+      this.paragraph._didExceedMaxLines = true;
+      lineMetrics = lineMetrics.slice(
+        0,
+        this.paragraph.paragraphStyle.maxLines
+      );
+    } else {
+      this.paragraph._didExceedMaxLines = false;
+    }
     this.paragraph._lineMetrics = lineMetrics;
   }
 
@@ -274,13 +285,13 @@ export class TextLayout {
   }
 }
 
-function isEnglishWord(str: string) {
+export function isEnglishWord(str: string) {
   const englishRegex = /^[A-Za-z]+$/;
   const result = englishRegex.test(str);
   return result;
 }
 
-function isSquareCharacter(str: string) {
+export function isSquareCharacter(str: string) {
   const squareCharacterRange = /[\u4e00-\u9fa5]/;
   return squareCharacterRange.test(str);
 }
@@ -332,6 +343,6 @@ const mapOfPunctuation: Record<string, number> = {
   ".": 1,
 };
 
-function isPunctuation(char: string) {
+export function isPunctuation(char: string) {
   return mapOfPunctuation[char] === 1;
 }

@@ -193,9 +193,9 @@ export interface PositionWithAffinity {
 
 export interface ParagraphStyle {
   // disableHinting?: boolean;
-  // ellipsis?: string;
+  ellipsis?: string;
   // heightMultiplier?: number;
-  // maxLines?: number;
+  maxLines?: number;
   // replaceTabCharacters?: boolean;
   // strutStyle?: StrutStyle;
   textAlign?: SkEnum<TextAlign>;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextLayout = void 0;
+exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.TextLayout = void 0;
 const paragraph_1 = require("./paragraph");
 class LetterMeasurer {
     static measureLetters(span, context) {
@@ -206,7 +206,14 @@ class TextLayout {
             }
         });
         lineMetrics.push(currentLineMetrics);
-        console.log("lineMetricslineMetrics", lineMetrics);
+        if (this.paragraph.paragraphStyle.maxLines &&
+            lineMetrics.length > this.paragraph.paragraphStyle.maxLines) {
+            this.paragraph._didExceedMaxLines = true;
+            lineMetrics = lineMetrics.slice(0, this.paragraph.paragraphStyle.maxLines);
+        }
+        else {
+            this.paragraph._didExceedMaxLines = false;
+        }
         this.paragraph._lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
@@ -233,10 +240,12 @@ function isEnglishWord(str) {
     const result = englishRegex.test(str);
     return result;
 }
+exports.isEnglishWord = isEnglishWord;
 function isSquareCharacter(str) {
     const squareCharacterRange = /[\u4e00-\u9fa5]/;
     return squareCharacterRange.test(str);
 }
+exports.isSquareCharacter = isSquareCharacter;
 const mapOfPunctuation = {
     "！": 1,
     "？": 1,
@@ -286,3 +295,4 @@ const mapOfPunctuation = {
 function isPunctuation(char) {
     return mapOfPunctuation[char] === 1;
 }
+exports.isPunctuation = isPunctuation;

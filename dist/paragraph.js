@@ -100,10 +100,11 @@ class Paragraph extends skia_1.EmbindObject {
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
         this.isMiniTex = true;
+        this._didExceedMaxLines = false;
         this._lineMetrics = [];
     }
     didExceedMaxLines() {
-        return false;
+        return this._didExceedMaxLines;
     }
     getAlphabeticBaseline() {
         return 0;

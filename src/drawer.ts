@@ -1,5 +1,5 @@
 declare var wx: any;
-import { TextLayout } from "./layout";
+import { TextLayout, isSquareCharacter } from "./layout";
 import { Paragraph, TextSpan } from "./paragraph";
 import { LineMetrics, TextAlign, TextDirection } from "./skia";
 import {
@@ -30,6 +30,7 @@ export class Drawer {
   }
 
   draw(): ImageData {
+    // console.log("paragraph", this.paragraph);
     this.initCanvas();
     const width = this.paragraph.getMaxWidth() * Drawer.pixelRatio;
     const height = this.paragraph.getHeight() * Drawer.pixelRatio;
@@ -77,10 +78,28 @@ export class Drawer {
             currentLineMetrics &&
             currentDrawEndPosition > currentDrawStartPosition
           ) {
-            const drawingText = span.text.substring(
+            let drawingText = span.text.substring(
               currentDrawStartPosition,
               currentDrawEndPosition
             );
+
+            if (
+              this.paragraph.didExceedMaxLines() &&
+              this.paragraph.paragraphStyle.maxLines ===
+                currentLineMetrics.lineNumber + 1 &&
+              spanLetterStartIndex + currentDrawEndPosition ===
+                currentLineMetrics.endIndex
+            ) {
+              const trimLength = isSquareCharacter(
+                drawingText[drawingText.length - 1]
+              )
+                ? 1
+                : 3;
+              drawingText =
+                drawingText.substring(0, drawingText.length - trimLength) +
+                  this.paragraph.paragraphStyle.ellipsis ?? "...";
+            }
+
             const drawingLeft = (() => {
               if (
                 linesDrawingRightBounds[currentLineMetrics.lineNumber] ===
@@ -126,6 +145,7 @@ export class Drawer {
             }
 
             // draw text
+            console.log("draw text", drawingText);
             context.fillStyle = span.toTextFillStyle();
             context.fillText(
               drawingText,

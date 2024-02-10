@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drawer = void 0;
+const layout_1 = require("./layout");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 const text_style_1 = require("./text_style");
@@ -19,6 +20,7 @@ class Drawer {
         }
     }
     draw() {
+        // console.log("paragraph", this.paragraph);
         this.initCanvas();
         const width = this.paragraph.getMaxWidth() * Drawer.pixelRatio;
         const height = this.paragraph.getHeight() * Drawer.pixelRatio;
@@ -33,7 +35,7 @@ class Drawer {
         let linesDrawingRightBounds = {};
         const spans = this.paragraph.spansWithNewline();
         spans.forEach((span) => {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             if (span instanceof paragraph_1.TextSpan) {
                 let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
@@ -55,7 +57,19 @@ class Drawer {
                     }
                     if (currentLineMetrics &&
                         currentDrawEndPosition > currentDrawStartPosition) {
-                        const drawingText = span.text.substring(currentDrawStartPosition, currentDrawEndPosition);
+                        let drawingText = span.text.substring(currentDrawStartPosition, currentDrawEndPosition);
+                        if (this.paragraph.didExceedMaxLines() &&
+                            this.paragraph.paragraphStyle.maxLines ===
+                                currentLineMetrics.lineNumber + 1 &&
+                            spanLetterStartIndex + currentDrawEndPosition ===
+                                currentLineMetrics.endIndex) {
+                            const trimLength = (0, layout_1.isSquareCharacter)(drawingText[drawingText.length - 1])
+                                ? 1
+                                : 3;
+                            drawingText =
+                                (_a = drawingText.substring(0, drawingText.length - trimLength) +
+                                    this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "...";
+                        }
                         const drawingLeft = (() => {
                             var _a, _b;
                             if (linesDrawingRightBounds[currentLineMetrics.lineNumber] ===
@@ -90,6 +104,7 @@ class Drawer {
                             context.fillRect(drawingLeft, currentLineMetrics.yOffset, drawingRight - drawingLeft, currentLineMetrics.height);
                         }
                         // draw text
+                        console.log("draw text", drawingText);
                         context.fillStyle = span.toTextFillStyle();
                         context.fillText(drawingText, drawingLeft, currentLineMetrics.ascent + currentLineMetrics.yOffset);
                         // draw decoration
@@ -97,9 +112,9 @@ class Drawer {
                             context.save();
                             context.strokeStyle = span.toDecorationStrokeStyle();
                             context.lineWidth =
-                                ((_a = span.style.decorationThickness) !== null && _a !== void 0 ? _a : 1) *
-                                    Math.max(1, ((_b = span.style.fontSize) !== null && _b !== void 0 ? _b : 12) / 14);
-                            const decorationStyle = (_c = span.style.decorationStyle) === null || _c === void 0 ? void 0 : _c.value;
+                                ((_b = span.style.decorationThickness) !== null && _b !== void 0 ? _b : 1) *
+                                    Math.max(1, ((_c = span.style.fontSize) !== null && _c !== void 0 ? _c : 12) / 14);
+                            const decorationStyle = (_d = span.style.decorationStyle) === null || _d === void 0 ? void 0 : _d.value;
                             switch (decorationStyle) {
                                 case text_style_1.DecorationStyle.Dashed:
                                     context.lineCap = "butt";

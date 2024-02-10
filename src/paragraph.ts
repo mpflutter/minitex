@@ -122,8 +122,10 @@ export class Paragraph extends EmbindObject {
 
   isMiniTex = true;
 
+  _didExceedMaxLines = false;
+
   didExceedMaxLines(): boolean {
-    return false;
+    return this._didExceedMaxLines;
   }
 
   getAlphabeticBaseline(): number {
