@@ -1,4 +1,4 @@
-import { TextStyle } from "./text_style";
+import { FontStyle, TextStyle } from "./text_style";
 
 export class EmbindObject {
   _type = "";
@@ -74,8 +74,8 @@ export enum RectWidthStyle {
 }
 
 export enum Affinity {
-  Upstream = "Upstream",
-  Downstream = "Downstream",
+  Upstream,
+  Downstream,
 }
 
 export interface GlyphInfo {
@@ -190,7 +190,7 @@ export interface Typeface {
 
 export interface PositionWithAffinity {
   pos: number;
-  affinity: Affinity;
+  affinity: SkEnum<Affinity>;
 }
 
 export interface ParagraphStyle {
@@ -199,12 +199,23 @@ export interface ParagraphStyle {
   heightMultiplier?: number;
   maxLines?: number;
   // replaceTabCharacters?: boolean;
-  // strutStyle?: StrutStyle;
+  strutStyle?: StrutStyle;
   textAlign?: SkEnum<TextAlign>;
   textDirection?: SkEnum<TextDirection>;
   // textHeightBehavior?: TextHeightBehavior;
   textStyle?: TextStyle;
   // applyRoundingHack?: boolean;
+}
+
+export interface StrutStyle {
+  strutEnabled?: boolean;
+  fontFamilies?: string[];
+  fontStyle?: FontStyle;
+  fontSize?: number;
+  heightMultiplier?: number;
+  halfLeading?: boolean;
+  leading?: number;
+  forceStrutHeight?: boolean;
 }
 
 export enum TextAlign {

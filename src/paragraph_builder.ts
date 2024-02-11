@@ -21,9 +21,11 @@ export class ParagraphBuilder extends EmbindObject {
     fontCollection: any
   ) {
     const fontFamilies = style.textStyle?.fontFamilies;
-    if (fontFamilies && fontFamilies[0] === "Roboto") {
+    if (fontFamilies && fontFamilies[0] === "MiniTex") {
+      // console.log("use minitex");
       return new ParagraphBuilder(style);
     } else {
+      // console.log("use old", fontFamilies);
       return originMakeFromFontCollectionMethod(style, fontCollection);
     }
   }
@@ -52,7 +54,7 @@ export class ParagraphBuilder extends EmbindObject {
     baseline?: TextBaseline,
     offset?: number
   ): void {
-    console.log("addPlaceholder", width, height, alignment, baseline, offset);
+    // console.log("addPlaceholder", width, height, alignment, baseline, offset);
   }
 
   /**
@@ -61,7 +63,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param str
    */
   addText(str: string): void {
-    console.log("addText", str);
+    // console.log("addText", str);
     let mergedStyle: TextStyle = {};
     this.styles.forEach((it) => {
       Object.assign(mergedStyle, it);
@@ -160,7 +162,7 @@ export class ParagraphBuilder extends EmbindObject {
    * of text such as bolding.
    */
   pop(): void {
-    console.log("pop");
+    // console.log("pop");
     this.styles.pop();
   }
 
@@ -170,7 +172,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param textStyle
    */
   pushStyle(textStyle: TextStyle): void {
-    console.log("pushStyle", textStyle);
+    // console.log("pushStyle", textStyle);
     this.styles.push(textStyle);
   }
 
@@ -181,7 +183,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param bg
    */
   pushPaintStyle(textStyle: TextStyle, fg: Paint, bg: Paint): void {
-    console.log("pushPaintStyle", textStyle, fg, bg);
+    // console.log("pushPaintStyle", textStyle, fg, bg);
     this.styles.push(textStyle);
   }
 

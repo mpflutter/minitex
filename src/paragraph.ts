@@ -1,6 +1,7 @@
 import { Drawer } from "./drawer";
 import { TextLayout } from "./layout";
 import {
+  Affinity,
   EmbindObject,
   GlyphInfo,
   LetterRect,
@@ -141,7 +142,7 @@ export class Paragraph extends EmbindObject {
    * with the top left corner as the origin, and +y direction as down.
    */
   getGlyphPositionAtCoordinate(dx: number, dy: number): PositionWithAffinity {
-    return { pos: 0, affinity: {} as any };
+    return { pos: 0, affinity: { value: Affinity.Upstream } };
     throw "getGlyphPositionAtCoordinate todo";
   }
 
@@ -169,7 +170,7 @@ export class Paragraph extends EmbindObject {
     for (let i = 0; i < lineMetrics.length; i++) {
       height += lineMetrics[i].height * lineMetrics[i].heightMultiplier;
     }
-    console.log("getHeight", height);
+    // console.log("getHeight", height);
     return height;
   }
 
@@ -224,7 +225,7 @@ export class Paragraph extends EmbindObject {
     for (let i = 0; i < lineMetrics.length; i++) {
       maxWidth = Math.max(maxWidth, lineMetrics[i].width);
     }
-    console.log("getMaxIntrinsicWidth", maxWidth);
+    // console.log("getMaxIntrinsicWidth", maxWidth);
     return maxWidth;
   }
 
@@ -234,7 +235,7 @@ export class Paragraph extends EmbindObject {
     for (let i = 0; i < lineMetrics.length; i++) {
       maxWidth = Math.max(maxWidth, lineMetrics[i].width);
     }
-    console.log("getMaxWidth", maxWidth);
+    // console.log("getMaxWidth", maxWidth);
     return maxWidth;
   }
 
@@ -244,7 +245,7 @@ export class Paragraph extends EmbindObject {
     for (let i = 0; i < lineMetrics.length; i++) {
       width = Math.max(width, lineMetrics[i].width);
     }
-    console.log("getMinIntrinsicWidth", width);
+    // console.log("getMinIntrinsicWidth", width);
     return width;
   }
 

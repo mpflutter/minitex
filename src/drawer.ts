@@ -153,7 +153,7 @@ export class Drawer {
             }
 
             // draw text
-            console.log("draw text", drawingText);
+            // console.log("draw text", drawingText);
             context.fillStyle = span.toTextFillStyle();
             context.fillText(
               drawingText,

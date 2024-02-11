@@ -119,7 +119,7 @@ class Paragraph extends skia_1.EmbindObject {
      * with the top left corner as the origin, and +y direction as down.
      */
     getGlyphPositionAtCoordinate(dx, dy) {
-        return { pos: 0, affinity: {} };
+        return { pos: 0, affinity: { value: skia_1.Affinity.Upstream } };
         throw "getGlyphPositionAtCoordinate todo";
     }
     /**
@@ -144,7 +144,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             height += lineMetrics[i].height * lineMetrics[i].heightMultiplier;
         }
-        console.log("getHeight", height);
+        // console.log("getHeight", height);
         return height;
     }
     getIdeographicBaseline() {
@@ -191,7 +191,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             maxWidth = Math.max(maxWidth, lineMetrics[i].width);
         }
-        console.log("getMaxIntrinsicWidth", maxWidth);
+        // console.log("getMaxIntrinsicWidth", maxWidth);
         return maxWidth;
     }
     getMaxWidth() {
@@ -200,7 +200,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             maxWidth = Math.max(maxWidth, lineMetrics[i].width);
         }
-        console.log("getMaxWidth", maxWidth);
+        // console.log("getMaxWidth", maxWidth);
         return maxWidth;
     }
     getMinIntrinsicWidth() {
@@ -209,7 +209,7 @@ class Paragraph extends skia_1.EmbindObject {
         for (let i = 0; i < lineMetrics.length; i++) {
             width = Math.max(width, lineMetrics[i].width);
         }
-        console.log("getMinIntrinsicWidth", width);
+        // console.log("getMinIntrinsicWidth", width);
         return width;
     }
     /**

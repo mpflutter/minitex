@@ -13,7 +13,6 @@ class MiniTex {
         };
         const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;
         canvasKit.Canvas.prototype.drawParagraph = function (paragraph, dx, dy) {
-            console.log("drawParagraph", arguments);
             if (paragraph.isMiniTex === true) {
                 (0, paragraph_1.drawParagraph)(canvasKit, this, paragraph, dx, dy);
             }

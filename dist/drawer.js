@@ -109,7 +109,7 @@ class Drawer {
                             context.fillRect(drawingLeft, textTop + currentLineMetrics.yOffset, drawingRight - drawingLeft, textHeight);
                         }
                         // draw text
-                        console.log("draw text", drawingText);
+                        // console.log("draw text", drawingText);
                         context.fillStyle = span.toTextFillStyle();
                         context.fillText(drawingText, drawingLeft, textBaseline + currentLineMetrics.yOffset);
                         // draw decoration

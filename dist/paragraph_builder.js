@@ -7,10 +7,12 @@ class ParagraphBuilder extends skia_1.EmbindObject {
     static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection) {
         var _a;
         const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
-        if (fontFamilies && fontFamilies[0] === "Roboto") {
+        if (fontFamilies && fontFamilies[0] === "MiniTex") {
+            // console.log("use minitex");
             return new ParagraphBuilder(style);
         }
         else {
+            // console.log("use old", fontFamilies);
             return originMakeFromFontCollectionMethod(style, fontCollection);
         }
     }
@@ -30,7 +32,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param offset
      */
     addPlaceholder(width, height, alignment, baseline, offset) {
-        console.log("addPlaceholder", width, height, alignment, baseline, offset);
+        // console.log("addPlaceholder", width, height, alignment, baseline, offset);
     }
     /**
      * Adds text to the builder. Forms the proper runs to use the upper-most style
@@ -38,7 +40,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param str
      */
     addText(str) {
-        console.log("addText", str);
+        // console.log("addText", str);
         let mergedStyle = {};
         this.styles.forEach((it) => {
             Object.assign(mergedStyle, it);
@@ -131,7 +133,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * of text such as bolding.
      */
     pop() {
-        console.log("pop");
+        // console.log("pop");
         this.styles.pop();
     }
     /**
@@ -140,7 +142,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param textStyle
      */
     pushStyle(textStyle) {
-        console.log("pushStyle", textStyle);
+        // console.log("pushStyle", textStyle);
         this.styles.push(textStyle);
     }
     /**
@@ -150,7 +152,7 @@ class ParagraphBuilder extends skia_1.EmbindObject {
      * @param bg
      */
     pushPaintStyle(textStyle, fg, bg) {
-        console.log("pushPaintStyle", textStyle, fg, bg);
+        // console.log("pushPaintStyle", textStyle, fg, bg);
         this.styles.push(textStyle);
     }
     /**

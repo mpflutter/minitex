@@ -62,8 +62,8 @@ var RectWidthStyle;
 })(RectWidthStyle || (exports.RectWidthStyle = RectWidthStyle = {}));
 var Affinity;
 (function (Affinity) {
-    Affinity["Upstream"] = "Upstream";
-    Affinity["Downstream"] = "Downstream";
+    Affinity[Affinity["Upstream"] = 0] = "Upstream";
+    Affinity[Affinity["Downstream"] = 1] = "Downstream";
 })(Affinity || (exports.Affinity = Affinity = {}));
 var TextAlign;
 (function (TextAlign) {

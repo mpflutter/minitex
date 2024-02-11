@@ -131,7 +131,7 @@ export class TextLayout {
       height: 0,
       heightMultiplier: Math.max(
         1,
-        this.paragraph.paragraphStyle.heightMultiplier ?? 1
+        (this.paragraph.paragraphStyle.heightMultiplier ?? 1.5) / 1.5
       ),
       width: 0,
       left: 0,
@@ -163,7 +163,7 @@ export class TextLayout {
         if (span.style.heightMultiplier && span.style.heightMultiplier > 0) {
           currentLineMetrics.heightMultiplier = Math.max(
             currentLineMetrics.heightMultiplier,
-            span.style.heightMultiplier - 1
+            span.style.heightMultiplier / 1.5
           );
         }
 
@@ -285,6 +285,7 @@ export class TextLayout {
     } else {
       this.paragraph._didExceedMaxLines = false;
     }
+    // console.log("lineMetricslineMetrics", lineMetrics);
     this.paragraph._lineMetrics = lineMetrics;
   }
 
@@ -300,7 +301,7 @@ export class TextLayout {
       height: currentLineMetrics.height,
       heightMultiplier: Math.max(
         1,
-        this.paragraph.paragraphStyle.heightMultiplier ?? 1
+        (this.paragraph.paragraphStyle.heightMultiplier ?? 1.5) / 1.5
       ),
       width: 0,
       left: 0,

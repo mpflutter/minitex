@@ -97,7 +97,7 @@ class TextLayout {
             ascent: 0,
             descent: 0,
             height: 0,
-            heightMultiplier: Math.max(1, (_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1),
+            heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
             left: 0,
             yOffset: 0,
@@ -126,7 +126,7 @@ class TextLayout {
                         matrics.fontBoundingBoxAscent + matrics.fontBoundingBoxDescent;
                 }
                 if (span.style.heightMultiplier && span.style.heightMultiplier > 0) {
-                    currentLineMetrics.heightMultiplier = Math.max(currentLineMetrics.heightMultiplier, span.style.heightMultiplier - 1);
+                    currentLineMetrics.heightMultiplier = Math.max(currentLineMetrics.heightMultiplier, span.style.heightMultiplier / 1.5);
                 }
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
@@ -224,6 +224,7 @@ class TextLayout {
         else {
             this.paragraph._didExceedMaxLines = false;
         }
+        // console.log("lineMetricslineMetrics", lineMetrics);
         this.paragraph._lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
@@ -237,7 +238,7 @@ class TextLayout {
             ascent: currentLineMetrics.ascent,
             descent: currentLineMetrics.descent,
             height: currentLineMetrics.height,
-            heightMultiplier: Math.max(1, (_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1),
+            heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
             left: 0,
             yOffset: currentLineMetrics.yOffset +
