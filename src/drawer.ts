@@ -133,14 +133,22 @@ export class Drawer {
             linesDrawingRightBounds[currentLineMetrics.lineNumber] =
               drawingRight;
 
+            const textTop =
+              currentLineMetrics.baseline *
+                currentLineMetrics.heightMultiplier -
+              span.letterBaseline;
+            const textBaseline =
+              currentLineMetrics.baseline * currentLineMetrics.heightMultiplier;
+            const textHeight = span.letterHeight;
+
             // draw background
             if (span.style.backgroundColor) {
               context.fillStyle = span.toBackgroundFillStyle();
               context.fillRect(
                 drawingLeft,
-                currentLineMetrics.yOffset,
+                textTop + currentLineMetrics.yOffset,
                 drawingRight - drawingLeft,
-                currentLineMetrics.height
+                textHeight
               );
             }
 
@@ -150,7 +158,7 @@ export class Drawer {
             context.fillText(
               drawingText,
               drawingLeft,
-              currentLineMetrics.ascent + currentLineMetrics.yOffset
+              textBaseline + currentLineMetrics.yOffset
             );
 
             // draw decoration
@@ -177,20 +185,20 @@ export class Drawer {
                 context.beginPath();
                 context.moveTo(
                   drawingLeft,
-                  currentLineMetrics.yOffset + currentLineMetrics.ascent + 2
+                  currentLineMetrics.yOffset + textBaseline + 2
                 );
                 context.lineTo(
                   drawingRight,
-                  currentLineMetrics.yOffset + currentLineMetrics.ascent + 2
+                  currentLineMetrics.yOffset + textBaseline + 2
                 );
                 if (decorationStyle === DecorationStyle.Double) {
                   context.moveTo(
                     drawingLeft,
-                    currentLineMetrics.yOffset + currentLineMetrics.ascent + 4
+                    currentLineMetrics.yOffset + textBaseline + 4
                   );
                   context.lineTo(
                     drawingRight,
-                    currentLineMetrics.yOffset + currentLineMetrics.ascent + 4
+                    currentLineMetrics.yOffset + textBaseline + 4
                   );
                 }
                 context.stroke();
@@ -199,24 +207,20 @@ export class Drawer {
                 context.beginPath();
                 context.moveTo(
                   drawingLeft,
-                  currentLineMetrics.yOffset + currentLineMetrics.height / 2.0
+                  currentLineMetrics.yOffset + textTop + textHeight / 2.0
                 );
                 context.lineTo(
                   drawingRight,
-                  currentLineMetrics.yOffset + currentLineMetrics.height / 2.0
+                  currentLineMetrics.yOffset + textTop + textHeight / 2.0
                 );
                 if (decorationStyle === DecorationStyle.Double) {
                   context.moveTo(
                     drawingLeft,
-                    currentLineMetrics.yOffset +
-                      currentLineMetrics.height / 2.0 +
-                      2
+                    currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2
                   );
                   context.lineTo(
                     drawingRight,
-                    currentLineMetrics.yOffset +
-                      currentLineMetrics.height / 2.0 +
-                      2
+                    currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2
                   );
                 }
                 context.stroke();
@@ -227,8 +231,14 @@ export class Drawer {
                 context.lineTo(drawingRight, currentLineMetrics.yOffset);
 
                 if (decorationStyle === DecorationStyle.Double) {
-                  context.moveTo(drawingLeft, currentLineMetrics.yOffset + 2);
-                  context.lineTo(drawingRight, currentLineMetrics.yOffset + 2);
+                  context.moveTo(
+                    drawingLeft,
+                    currentLineMetrics.yOffset + textTop + 2
+                  );
+                  context.lineTo(
+                    drawingRight,
+                    currentLineMetrics.yOffset + textTop + 2
+                  );
                 }
                 context.stroke();
               }

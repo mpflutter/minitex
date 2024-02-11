@@ -86,6 +86,7 @@ class TextLayout {
         }
     }
     layout(layoutWidth) {
+        var _a;
         this.initCanvas();
         let currentLineMetrics = {
             startIndex: 0,
@@ -96,6 +97,7 @@ class TextLayout {
             ascent: 0,
             descent: 0,
             height: 0,
+            heightMultiplier: Math.max(1, (_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1),
             width: 0,
             left: 0,
             yOffset: 0,
@@ -113,13 +115,21 @@ class TextLayout {
                     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
                     currentLineMetrics.ascent = mHeight * 1.15;
                     currentLineMetrics.descent = mHeight * 0.35;
+                    span.letterBaseline = mHeight * 1.15;
+                    span.letterHeight = mHeight * 1.15 + mHeight * 0.35;
                 }
                 else {
                     currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
                     currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
+                    span.letterBaseline = matrics.fontBoundingBoxAscent;
+                    span.letterHeight =
+                        matrics.fontBoundingBoxAscent + matrics.fontBoundingBoxDescent;
+                }
+                if (span.style.heightMultiplier && span.style.heightMultiplier > 0) {
+                    currentLineMetrics.heightMultiplier = Math.max(currentLineMetrics.heightMultiplier, span.style.heightMultiplier - 1);
                 }
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
-                currentLineMetrics.baseline = currentLineMetrics.ascent;
+                currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (currentLineMetrics.width + matrics.width < layoutWidth) {
                     currentLineMetrics.endIndex += span.text.length;
                     currentLineMetrics.width += matrics.width;
@@ -217,6 +227,7 @@ class TextLayout {
         this.paragraph._lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
+        var _a;
         return {
             startIndex: currentLineMetrics.endIndex,
             endIndex: currentLineMetrics.endIndex,
@@ -226,9 +237,11 @@ class TextLayout {
             ascent: currentLineMetrics.ascent,
             descent: currentLineMetrics.descent,
             height: currentLineMetrics.height,
+            heightMultiplier: Math.max(1, (_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1),
             width: 0,
             left: 0,
-            yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
+            yOffset: currentLineMetrics.yOffset +
+                currentLineMetrics.height * currentLineMetrics.heightMultiplier,
             baseline: currentLineMetrics.baseline,
             lineNumber: currentLineMetrics.lineNumber + 1,
         };

@@ -11,7 +11,6 @@ export class MiniTex {
       style: any,
       fontCollection: any
     ) {
-      console.log("canvasKit.ParagraphBuilder.MakeFromFontCollection");
       return ParagraphBuilder.MakeFromFontCollection(
         originMakeFromFontCollectionMethod,
         style,

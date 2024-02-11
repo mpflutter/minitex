@@ -1,9 +1,9 @@
 import { Drawer } from "./drawer";
 import { TextLayout } from "./layout";
 import {
-  Affinity,
   EmbindObject,
   GlyphInfo,
+  LetterRect,
   LineMetrics,
   ParagraphStyle,
   PositionWithAffinity,
@@ -13,7 +13,7 @@ import {
   ShapedLine,
   URange,
 } from "./skia";
-import { FontSlant, FontWeight, TextStyle } from "./text_style";
+import { FontSlant, TextStyle } from "./text_style";
 
 export const drawParagraph = function (
   CanvasKit: any,
@@ -47,7 +47,11 @@ export const drawParagraph = function (
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };
 
-export class Span {}
+export class Span {
+  letterBaseline: number = 0;
+  letterHeight: number = 0;
+  lettersBounding: LetterRect[] = [];
+}
 
 export class TextSpan extends Span {
   constructor(readonly text: string, readonly style: TextStyle) {
@@ -161,10 +165,9 @@ export class Paragraph extends EmbindObject {
 
   getHeight(): number {
     const lineMetrics = this.getLineMetrics();
-    console.log(lineMetrics);
     let height = 0;
     for (let i = 0; i < lineMetrics.length; i++) {
-      height += lineMetrics[i].height;
+      height += lineMetrics[i].height * lineMetrics[i].heightMultiplier;
     }
     console.log("getHeight", height);
     return height;

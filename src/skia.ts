@@ -134,6 +134,8 @@ export interface LineMetrics {
   descent: number;
   /** round(ascent + descent) */
   height: number;
+  /** heightMultiplier */
+  heightMultiplier: number;
   /** width of the line */
   width: number;
   /** The left edge of the line. The right edge can be obtained with `left + width` */
@@ -194,7 +196,7 @@ export interface PositionWithAffinity {
 export interface ParagraphStyle {
   // disableHinting?: boolean;
   ellipsis?: string;
-  // heightMultiplier?: number;
+  heightMultiplier?: number;
   maxLines?: number;
   // replaceTabCharacters?: boolean;
   // strutStyle?: StrutStyle;
@@ -212,4 +214,11 @@ export enum TextAlign {
   Justify = 3,
   Start = 4,
   End = 5,
+}
+
+export interface LetterRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }

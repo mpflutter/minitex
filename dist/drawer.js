@@ -98,15 +98,20 @@ class Drawer {
                         const drawingRight = drawingLeft + context.measureText(drawingText).width;
                         linesDrawingRightBounds[currentLineMetrics.lineNumber] =
                             drawingRight;
+                        const textTop = currentLineMetrics.baseline *
+                            currentLineMetrics.heightMultiplier -
+                            span.letterBaseline;
+                        const textBaseline = currentLineMetrics.baseline * currentLineMetrics.heightMultiplier;
+                        const textHeight = span.letterHeight;
                         // draw background
                         if (span.style.backgroundColor) {
                             context.fillStyle = span.toBackgroundFillStyle();
-                            context.fillRect(drawingLeft, currentLineMetrics.yOffset, drawingRight - drawingLeft, currentLineMetrics.height);
+                            context.fillRect(drawingLeft, textTop + currentLineMetrics.yOffset, drawingRight - drawingLeft, textHeight);
                         }
                         // draw text
                         console.log("draw text", drawingText);
                         context.fillStyle = span.toTextFillStyle();
-                        context.fillText(drawingText, drawingLeft, currentLineMetrics.ascent + currentLineMetrics.yOffset);
+                        context.fillText(drawingText, drawingLeft, textBaseline + currentLineMetrics.yOffset);
                         // draw decoration
                         if (span.style.decoration) {
                             context.save();
@@ -127,25 +132,21 @@ class Drawer {
                             }
                             if (span.style.decoration & text_style_1.UnderlineDecoration) {
                                 context.beginPath();
-                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + currentLineMetrics.ascent + 2);
-                                context.lineTo(drawingRight, currentLineMetrics.yOffset + currentLineMetrics.ascent + 2);
+                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + textBaseline + 2);
+                                context.lineTo(drawingRight, currentLineMetrics.yOffset + textBaseline + 2);
                                 if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + currentLineMetrics.ascent + 4);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + currentLineMetrics.ascent + 4);
+                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textBaseline + 4);
+                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textBaseline + 4);
                                 }
                                 context.stroke();
                             }
                             if (span.style.decoration & text_style_1.LineThroughDecoration) {
                                 context.beginPath();
-                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + currentLineMetrics.height / 2.0);
-                                context.lineTo(drawingRight, currentLineMetrics.yOffset + currentLineMetrics.height / 2.0);
+                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + textHeight / 2.0);
+                                context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + textHeight / 2.0);
                                 if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset +
-                                        currentLineMetrics.height / 2.0 +
-                                        2);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset +
-                                        currentLineMetrics.height / 2.0 +
-                                        2);
+                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2);
+                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2);
                                 }
                                 context.stroke();
                             }
@@ -154,8 +155,8 @@ class Drawer {
                                 context.moveTo(drawingLeft, currentLineMetrics.yOffset);
                                 context.lineTo(drawingRight, currentLineMetrics.yOffset);
                                 if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + 2);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + 2);
+                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + 2);
+                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + 2);
                                 }
                                 context.stroke();
                             }

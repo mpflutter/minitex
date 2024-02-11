@@ -1,6 +1,6 @@
 declare var wx: any;
 import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
-import { LineMetrics } from "./skia";
+import { LetterRect, LineMetrics, Rect } from "./skia";
 
 interface LetterMeasureResult {
   useCount: number;
@@ -129,6 +129,10 @@ export class TextLayout {
       ascent: 0,
       descent: 0,
       height: 0,
+      heightMultiplier: Math.max(
+        1,
+        this.paragraph.paragraphStyle.heightMultiplier ?? 1
+      ),
       width: 0,
       left: 0,
       yOffset: 0,
@@ -141,19 +145,37 @@ export class TextLayout {
       if (span instanceof TextSpan) {
         TextLayout.sharedLayoutContext.font = span.toCanvasFont();
         const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
+
         if (!matrics.fontBoundingBoxAscent) {
           const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
           currentLineMetrics.ascent = mHeight * 1.15;
           currentLineMetrics.descent = mHeight * 0.35;
+          span.letterBaseline = mHeight * 1.15;
+          span.letterHeight = mHeight * 1.15 + mHeight * 0.35;
         } else {
           currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
           currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
+          span.letterBaseline = matrics.fontBoundingBoxAscent;
+          span.letterHeight =
+            matrics.fontBoundingBoxAscent + matrics.fontBoundingBoxDescent;
         }
+
+        if (span.style.heightMultiplier && span.style.heightMultiplier > 0) {
+          currentLineMetrics.heightMultiplier = Math.max(
+            currentLineMetrics.heightMultiplier,
+            span.style.heightMultiplier - 1
+          );
+        }
+
         currentLineMetrics.height = Math.max(
           currentLineMetrics.height,
           currentLineMetrics.ascent + currentLineMetrics.descent
         );
-        currentLineMetrics.baseline = currentLineMetrics.ascent;
+
+        currentLineMetrics.baseline = Math.max(
+          currentLineMetrics.baseline,
+          currentLineMetrics.ascent
+        );
 
         if (currentLineMetrics.width + matrics.width < layoutWidth) {
           currentLineMetrics.endIndex += span.text.length;
@@ -276,9 +298,15 @@ export class TextLayout {
       ascent: currentLineMetrics.ascent,
       descent: currentLineMetrics.descent,
       height: currentLineMetrics.height,
+      heightMultiplier: Math.max(
+        1,
+        this.paragraph.paragraphStyle.heightMultiplier ?? 1
+      ),
       width: 0,
       left: 0,
-      yOffset: currentLineMetrics.yOffset + currentLineMetrics.height,
+      yOffset:
+        currentLineMetrics.yOffset +
+        currentLineMetrics.height * currentLineMetrics.heightMultiplier,
       baseline: currentLineMetrics.baseline,
       lineNumber: currentLineMetrics.lineNumber + 1,
     };

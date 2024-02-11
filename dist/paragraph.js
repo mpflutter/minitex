@@ -23,6 +23,11 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
 };
 exports.drawParagraph = drawParagraph;
 class Span {
+    constructor() {
+        this.letterBaseline = 0;
+        this.letterHeight = 0;
+        this.lettersBounding = [];
+    }
 }
 exports.Span = Span;
 class TextSpan extends Span {
@@ -135,10 +140,9 @@ class Paragraph extends skia_1.EmbindObject {
     }
     getHeight() {
         const lineMetrics = this.getLineMetrics();
-        console.log(lineMetrics);
         let height = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
-            height += lineMetrics[i].height;
+            height += lineMetrics[i].height * lineMetrics[i].heightMultiplier;
         }
         console.log("getHeight", height);
         return height;
