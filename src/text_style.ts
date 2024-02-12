@@ -1,4 +1,4 @@
-import { InputColor, SkEnum } from "./skia";
+import { InputColor, SkEnum, TextShadow } from "./skia";
 
 export const NoDecoration = 0;
 export const UnderlineDecoration = 1;
@@ -22,7 +22,7 @@ export interface TextStyle {
   halfLeading?: boolean;
   letterSpacing?: number;
   locale?: string;
-  // shadows?: TextShadow[];
+  shadows?: TextShadow[];
   // textBaseline?: TextBaseline;
   wordSpacing?: number;
 }

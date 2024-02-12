@@ -74,7 +74,7 @@ export class Drawer {
         );
 
         context.font = span.toCanvasFont();
-        console.log("font", span.toCanvasFont())
+        // console.log("font", span.toCanvasFont())
 
         while (spanUndrawLength > 0) {
           let currentDrawText = "";
@@ -164,18 +164,29 @@ export class Drawer {
             textHeight,
           });
 
+          context.save();
+          if (span.style.shadows && span.style.shadows.length > 0) {
+            console.log("span.style.shadows[0]", span.style.shadows[0]);
+            context.shadowColor = span.style.shadows[0].color
+              ? span.colorToHex(span.style.shadows[0].color as Float32Array)
+              : "transparent";
+            context.shadowOffsetX = span.style.shadows[0].offset?.[0] ?? 0;
+            context.shadowOffsetY = span.style.shadows[0].offset?.[1] ?? 0;
+            context.shadowBlur = span.style.shadows[0].blurRadius ?? 0;
+          }
           context.fillStyle = span.toTextFillStyle();
           context.fillText(
             currentDrawText,
             drawingLeft,
             textBaseline + currentDrawLine.yOffset
           );
-          console.log(
-            "fillText",
-            currentDrawText,
-            drawingLeft,
-            textBaseline + currentDrawLine.yOffset
-          );
+          context.restore();
+          // console.log(
+          //   "fillText",
+          //   currentDrawText,
+          //   drawingLeft,
+          //   textBaseline + currentDrawLine.yOffset
+          // );
 
           this.drawDecoration(span, context, {
             currentDrawLine,

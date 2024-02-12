@@ -233,3 +233,12 @@ export interface LetterRect {
   w: number;
   h: number;
 }
+
+export interface TextShadow {
+  color?: InputColor;
+  /**
+   * 2d array for x and y offset. Defaults to [0, 0]
+   */
+  offset?: number[];
+  blurRadius?: number;
+}

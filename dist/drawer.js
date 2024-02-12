@@ -45,7 +45,7 @@ class Drawer {
             linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
         });
         spans.forEach((span) => {
-            var _a;
+            var _a, _b, _c, _d, _e, _f;
             if (didExceedMaxLines)
                 return;
             if (span instanceof paragraph_1.TextSpan) {
@@ -53,7 +53,7 @@ class Drawer {
                 let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
                 context.font = span.toCanvasFont();
-                console.log("font", span.toCanvasFont());
+                // console.log("font", span.toCanvasFont())
                 while (spanUndrawLength > 0) {
                     let currentDrawText = "";
                     let currentDrawLine;
@@ -118,9 +118,25 @@ class Drawer {
                         textTop,
                         textHeight,
                     });
+                    context.save();
+                    if (span.style.shadows && span.style.shadows.length > 0) {
+                        console.log("span.style.shadows[0]", span.style.shadows[0]);
+                        context.shadowColor = span.style.shadows[0].color
+                            ? span.colorToHex(span.style.shadows[0].color)
+                            : "transparent";
+                        context.shadowOffsetX = (_c = (_b = span.style.shadows[0].offset) === null || _b === void 0 ? void 0 : _b[0]) !== null && _c !== void 0 ? _c : 0;
+                        context.shadowOffsetY = (_e = (_d = span.style.shadows[0].offset) === null || _d === void 0 ? void 0 : _d[1]) !== null && _e !== void 0 ? _e : 0;
+                        context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
+                    }
                     context.fillStyle = span.toTextFillStyle();
                     context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
-                    console.log("fillText", currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                    context.restore();
+                    // console.log(
+                    //   "fillText",
+                    //   currentDrawText,
+                    //   drawingLeft,
+                    //   textBaseline + currentDrawLine.yOffset
+                    // );
                     this.drawDecoration(span, context, {
                         currentDrawLine,
                         drawingLeft,
