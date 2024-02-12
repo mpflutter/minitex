@@ -49,8 +49,8 @@ export const drawParagraph = function (
     imageData.width / Drawer.pixelRatio,
     imageData.height / Drawer.pixelRatio
   );
-  console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
-  console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
+  // console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
+  // console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
   const skPaint = new CanvasKit.Paint();
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };

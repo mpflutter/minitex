@@ -18,8 +18,8 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     }, imageData.data, 4 * imageData.width);
     const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
     const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
-    console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
-    console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
+    // console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
+    // console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
     const skPaint = new CanvasKit.Paint();
     skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };

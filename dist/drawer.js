@@ -36,141 +36,145 @@ class Drawer {
         context.clearRect(0, 0, width, height);
         context.save();
         context.scale(Drawer.pixelRatio, Drawer.pixelRatio);
+        let didExceedMaxLines = false;
         let spanLetterStartIndex = 0;
         let linesDrawingRightBounds = {};
-        const spans = this.paragraph.spansWithNewline();
-        spans.forEach((span) => {
+        const spans2 = this.paragraph.spansWithNewline();
+        let linesUndrawed = {};
+        this.paragraph._lineMetrics.forEach((it) => {
+            linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
+        });
+        spans2.forEach((span) => {
             var _a, _b, _c, _d;
+            if (didExceedMaxLines)
+                return;
             if (span instanceof paragraph_1.TextSpan) {
+                let spanUndrawLength = span.text.length;
                 let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
                 context.font = span.toCanvasFont();
-                let currentDrawStartPosition = 0;
-                let currentDrawEndPosition = 0;
-                while (spanLetterStartIndex + currentDrawStartPosition <
-                    spanLetterEndIndex) {
-                    let currentLineMetrics;
+                while (spanUndrawLength > 0) {
+                    let currentDrawText = "";
+                    let currentDrawLine;
                     for (let index = 0; index < lineMetrics.length; index++) {
                         const line = lineMetrics[index];
-                        if (spanLetterStartIndex + currentDrawStartPosition >=
-                            line.startIndex &&
-                            spanLetterStartIndex + currentDrawStartPosition < line.endIndex) {
-                            currentLineMetrics = line;
-                            currentDrawEndPosition += Math.min(span.text.length, line.endIndex - spanLetterStartIndex);
+                        if (linesUndrawed[line.lineNumber] > 0) {
+                            const currentDrawLength = Math.min(linesUndrawed[line.lineNumber], spanUndrawLength);
+                            currentDrawText = span.text.substring(span.text.length - spanUndrawLength, span.text.length - spanUndrawLength + currentDrawLength);
+                            spanUndrawLength -= currentDrawLength;
+                            linesUndrawed[line.lineNumber] -= currentDrawLength;
+                            currentDrawLine = line;
                             break;
                         }
                     }
-                    if (currentLineMetrics &&
-                        currentDrawEndPosition > currentDrawStartPosition) {
-                        let drawingText = span.text.substring(currentDrawStartPosition, currentDrawEndPosition);
-                        if (this.paragraph.didExceedMaxLines() &&
-                            this.paragraph.paragraphStyle.maxLines ===
-                                currentLineMetrics.lineNumber + 1 &&
-                            spanLetterStartIndex + currentDrawEndPosition ===
-                                currentLineMetrics.endIndex) {
-                            const trimLength = (0, layout_1.isSquareCharacter)(drawingText[drawingText.length - 1])
-                                ? 1
-                                : 3;
-                            drawingText =
-                                (_a = drawingText.substring(0, drawingText.length - trimLength) +
-                                    this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "...";
-                        }
-                        const drawingLeft = (() => {
-                            var _a, _b;
-                            if (linesDrawingRightBounds[currentLineMetrics.lineNumber] ===
-                                undefined) {
-                                const textAlign = (_a = this.paragraph.paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value;
-                                const textDirection = (_b = this.paragraph.paragraphStyle.textDirection) === null || _b === void 0 ? void 0 : _b.value;
-                                if (textAlign === skia_1.TextAlign.Center) {
-                                    linesDrawingRightBounds[currentLineMetrics.lineNumber] =
-                                        (this.paragraph.getMaxWidth() - currentLineMetrics.width) /
-                                            2.0;
-                                }
-                                else if (textAlign === skia_1.TextAlign.Right ||
-                                    (textAlign === skia_1.TextAlign.End &&
-                                        textDirection !== skia_1.TextDirection.RTL) ||
-                                    (textAlign === skia_1.TextAlign.Start &&
-                                        textDirection === skia_1.TextDirection.RTL)) {
-                                    linesDrawingRightBounds[currentLineMetrics.lineNumber] =
-                                        this.paragraph.getMaxWidth() - currentLineMetrics.width;
-                                }
-                                else {
-                                    linesDrawingRightBounds[currentLineMetrics.lineNumber] = 0;
-                                }
-                            }
-                            return linesDrawingRightBounds[currentLineMetrics.lineNumber];
-                        })();
-                        const drawingRight = drawingLeft + context.measureText(drawingText).width;
-                        linesDrawingRightBounds[currentLineMetrics.lineNumber] =
-                            drawingRight;
-                        const textTop = currentLineMetrics.baseline *
-                            currentLineMetrics.heightMultiplier -
-                            span.letterBaseline;
-                        const textBaseline = currentLineMetrics.baseline * currentLineMetrics.heightMultiplier;
-                        const textHeight = span.letterHeight;
-                        // draw background
-                        if (span.style.backgroundColor) {
-                            context.fillStyle = span.toBackgroundFillStyle();
-                            context.fillRect(drawingLeft, textTop + currentLineMetrics.yOffset, drawingRight - drawingLeft, textHeight);
-                        }
-                        // draw text
-                        // console.log("draw text", drawingText);
-                        context.fillStyle = span.toTextFillStyle();
-                        context.fillText(drawingText, drawingLeft, textBaseline + currentLineMetrics.yOffset);
-                        // draw decoration
-                        if (span.style.decoration) {
-                            context.save();
-                            context.strokeStyle = span.toDecorationStrokeStyle();
-                            context.lineWidth =
-                                ((_b = span.style.decorationThickness) !== null && _b !== void 0 ? _b : 1) *
-                                    Math.max(1, ((_c = span.style.fontSize) !== null && _c !== void 0 ? _c : 12) / 14);
-                            const decorationStyle = (_d = span.style.decorationStyle) === null || _d === void 0 ? void 0 : _d.value;
-                            switch (decorationStyle) {
-                                case text_style_1.DecorationStyle.Dashed:
-                                    context.lineCap = "butt";
-                                    context.setLineDash([10, 4]);
-                                    break;
-                                case text_style_1.DecorationStyle.Dotted:
-                                    context.lineCap = "butt";
-                                    context.setLineDash([4, 4]);
-                                    break;
-                            }
-                            if (span.style.decoration & text_style_1.UnderlineDecoration) {
-                                context.beginPath();
-                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + textBaseline + 2);
-                                context.lineTo(drawingRight, currentLineMetrics.yOffset + textBaseline + 2);
-                                if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textBaseline + 4);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textBaseline + 4);
-                                }
-                                context.stroke();
-                            }
-                            if (span.style.decoration & text_style_1.LineThroughDecoration) {
-                                context.beginPath();
-                                context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + textHeight / 2.0);
-                                context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + textHeight / 2.0);
-                                if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + textHeight / 2.0 + 2);
-                                }
-                                context.stroke();
-                            }
-                            if (span.style.decoration & text_style_1.OverlineDecoration) {
-                                context.beginPath();
-                                context.moveTo(drawingLeft, currentLineMetrics.yOffset);
-                                context.lineTo(drawingRight, currentLineMetrics.yOffset);
-                                if (decorationStyle === text_style_1.DecorationStyle.Double) {
-                                    context.moveTo(drawingLeft, currentLineMetrics.yOffset + textTop + 2);
-                                    context.lineTo(drawingRight, currentLineMetrics.yOffset + textTop + 2);
-                                }
-                                context.stroke();
-                            }
-                            context.restore();
-                        }
-                        currentDrawStartPosition = currentDrawEndPosition;
-                        currentDrawEndPosition = currentDrawStartPosition;
+                    if (!currentDrawLine)
+                        break;
+                    if (this.paragraph.didExceedMaxLines() &&
+                        this.paragraph.paragraphStyle.maxLines ===
+                            currentDrawLine.lineNumber + 1 &&
+                        linesUndrawed[currentDrawLine.lineNumber] <= 0) {
+                        const trimLength = (0, layout_1.isSquareCharacter)(currentDrawText[currentDrawText.length - 1])
+                            ? 1
+                            : 3;
+                        currentDrawText =
+                            (_a = currentDrawText.substring(0, currentDrawText.length - trimLength) + this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "...";
+                        didExceedMaxLines = true;
                     }
-                    else {
+                    const drawingLeft = (() => {
+                        var _a, _b;
+                        if (linesDrawingRightBounds[currentDrawLine.lineNumber] === undefined) {
+                            const textAlign = (_a = this.paragraph.paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value;
+                            const textDirection = (_b = this.paragraph.paragraphStyle.textDirection) === null || _b === void 0 ? void 0 : _b.value;
+                            if (textAlign === skia_1.TextAlign.Center) {
+                                linesDrawingRightBounds[currentDrawLine.lineNumber] =
+                                    (this.paragraph.getMaxWidth() - currentDrawLine.width) / 2.0;
+                            }
+                            else if (textAlign === skia_1.TextAlign.Right ||
+                                (textAlign === skia_1.TextAlign.End &&
+                                    textDirection !== skia_1.TextDirection.RTL) ||
+                                (textAlign === skia_1.TextAlign.Start &&
+                                    textDirection === skia_1.TextDirection.RTL)) {
+                                linesDrawingRightBounds[currentDrawLine.lineNumber] =
+                                    this.paragraph.getMaxWidth() - currentDrawLine.width;
+                            }
+                            else {
+                                linesDrawingRightBounds[currentDrawLine.lineNumber] = 0;
+                            }
+                        }
+                        return linesDrawingRightBounds[currentDrawLine.lineNumber];
+                    })();
+                    const drawingRight = drawingLeft + context.measureText(currentDrawText).width;
+                    linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
+                    const textTop = currentDrawLine.baseline * currentDrawLine.heightMultiplier -
+                        span.letterBaseline;
+                    const textBaseline = currentDrawLine.baseline * currentDrawLine.heightMultiplier;
+                    const textHeight = span.letterHeight;
+                    // draw background
+                    if (span.style.backgroundColor) {
+                        context.fillStyle = span.toBackgroundFillStyle();
+                        context.fillRect(drawingLeft, textTop + currentDrawLine.yOffset, drawingRight - drawingLeft, textHeight);
+                    }
+                    // draw text
+                    // console.log("draw text", drawingText);
+                    context.fillStyle = span.toTextFillStyle();
+                    context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                    // console.log(
+                    //   "fillText",
+                    //   currentDrawText,
+                    //   drawingLeft,
+                    //   textBaseline + currentDrawLine.yOffset
+                    // );
+                    // draw decoration
+                    if (span.style.decoration) {
+                        context.save();
+                        context.strokeStyle = span.toDecorationStrokeStyle();
+                        context.lineWidth =
+                            ((_b = span.style.decorationThickness) !== null && _b !== void 0 ? _b : 1) *
+                                Math.max(1, ((_c = span.style.fontSize) !== null && _c !== void 0 ? _c : 12) / 14);
+                        const decorationStyle = (_d = span.style.decorationStyle) === null || _d === void 0 ? void 0 : _d.value;
+                        switch (decorationStyle) {
+                            case text_style_1.DecorationStyle.Dashed:
+                                context.lineCap = "butt";
+                                context.setLineDash([10, 4]);
+                                break;
+                            case text_style_1.DecorationStyle.Dotted:
+                                context.lineCap = "butt";
+                                context.setLineDash([4, 4]);
+                                break;
+                        }
+                        if (span.style.decoration & text_style_1.UnderlineDecoration) {
+                            context.beginPath();
+                            context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 2);
+                            context.lineTo(drawingRight, currentDrawLine.yOffset + textBaseline + 2);
+                            if (decorationStyle === text_style_1.DecorationStyle.Double) {
+                                context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 4);
+                                context.lineTo(drawingRight, currentDrawLine.yOffset + textBaseline + 4);
+                            }
+                            context.stroke();
+                        }
+                        if (span.style.decoration & text_style_1.LineThroughDecoration) {
+                            context.beginPath();
+                            context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + textHeight / 2.0);
+                            context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + textHeight / 2.0);
+                            if (decorationStyle === text_style_1.DecorationStyle.Double) {
+                                context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2);
+                                context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2);
+                            }
+                            context.stroke();
+                        }
+                        if (span.style.decoration & text_style_1.OverlineDecoration) {
+                            context.beginPath();
+                            context.moveTo(drawingLeft, currentDrawLine.yOffset);
+                            context.lineTo(drawingRight, currentDrawLine.yOffset);
+                            if (decorationStyle === text_style_1.DecorationStyle.Double) {
+                                context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + 2);
+                                context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + 2);
+                            }
+                            context.stroke();
+                        }
+                        context.restore();
+                    }
+                    if (didExceedMaxLines) {
                         break;
                     }
                 }
