@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.TextLayout = void 0;
 const paragraph_1 = require("./paragraph");
+const text_style_1 = require("./text_style");
 class LetterMeasurer {
     static measureLetters(span, context) {
         let result = [0];
@@ -107,7 +108,7 @@ class TextLayout {
         let lineMetrics = [];
         const spans = this.paragraph.spansWithNewline();
         spans.forEach((span) => {
-            var _a;
+            var _a, _b, _c;
             if (span instanceof paragraph_1.TextSpan) {
                 TextLayout.sharedLayoutContext.font = span.toCanvasFont();
                 const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
@@ -133,6 +134,9 @@ class TextLayout {
                 if (currentLineMetrics.width + matrics.width < layoutWidth) {
                     currentLineMetrics.endIndex += span.text.length;
                     currentLineMetrics.width += matrics.width;
+                    if (((_b = (_a = span.style.fontStyle) === null || _a === void 0 ? void 0 : _a.slant) === null || _b === void 0 ? void 0 : _b.value) === text_style_1.FontSlant.Italic) {
+                        currentLineMetrics.width += 2;
+                    }
                 }
                 else {
                     let advances = matrics.advances
@@ -147,7 +151,7 @@ class TextLayout {
                     for (let index = 0; index < span.text.length; index++) {
                         const letter = span.text[index];
                         currentWord += letter;
-                        let nextWord = (_a = currentWord + span.text[index + 1]) !== null && _a !== void 0 ? _a : "";
+                        let nextWord = (_c = currentWord + span.text[index + 1]) !== null && _c !== void 0 ? _c : "";
                         if (advances[index + 1] === undefined) {
                             currentWordWidth += advances[index] - advances[index - 1];
                         }

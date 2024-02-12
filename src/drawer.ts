@@ -58,12 +58,12 @@ export class Drawer {
     let spanLetterStartIndex = 0;
     let linesDrawingRightBounds: Record<number, number> = {};
 
-    const spans2 = this.paragraph.spansWithNewline();
+    const spans = this.paragraph.spansWithNewline();
     let linesUndrawed: Record<number, number> = {};
     this.paragraph._lineMetrics.forEach((it) => {
       linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
     });
-    spans2.forEach((span) => {
+    spans.forEach((span) => {
       if (didExceedMaxLines) return;
       if (span instanceof TextSpan) {
         let spanUndrawLength = span.text.length;
@@ -74,6 +74,7 @@ export class Drawer {
         );
 
         context.font = span.toCanvasFont();
+        console.log("font", span.toCanvasFont())
 
         while (spanUndrawLength > 0) {
           let currentDrawText = "";
@@ -144,6 +145,7 @@ export class Drawer {
           })();
           const drawingRight =
             drawingLeft + context.measureText(currentDrawText).width;
+
           linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
 
           const textTop =
@@ -153,115 +155,36 @@ export class Drawer {
             currentDrawLine.baseline * currentDrawLine.heightMultiplier;
           const textHeight = span.letterHeight;
 
-          // draw background
-          if (span.style.backgroundColor) {
-            context.fillStyle = span.toBackgroundFillStyle();
-            context.fillRect(
-              drawingLeft,
-              textTop + currentDrawLine.yOffset,
-              drawingRight - drawingLeft,
-              textHeight
-            );
-          }
+          this.drawBackground(span, context, {
+            currentDrawLine,
+            drawingLeft,
+            drawingRight,
+            textBaseline,
+            textTop,
+            textHeight,
+          });
 
-          // draw text
-          // console.log("draw text", drawingText);
           context.fillStyle = span.toTextFillStyle();
           context.fillText(
             currentDrawText,
             drawingLeft,
             textBaseline + currentDrawLine.yOffset
           );
-          // console.log(
-          //   "fillText",
-          //   currentDrawText,
-          //   drawingLeft,
-          //   textBaseline + currentDrawLine.yOffset
-          // );
+          console.log(
+            "fillText",
+            currentDrawText,
+            drawingLeft,
+            textBaseline + currentDrawLine.yOffset
+          );
 
-          // draw decoration
-          if (span.style.decoration) {
-            context.save();
-            context.strokeStyle = span.toDecorationStrokeStyle();
-            context.lineWidth =
-              (span.style.decorationThickness ?? 1) *
-              Math.max(1, (span.style.fontSize ?? 12) / 14);
-            const decorationStyle = span.style.decorationStyle?.value;
-
-            switch (decorationStyle) {
-              case DecorationStyle.Dashed:
-                context.lineCap = "butt";
-                context.setLineDash([10, 4]);
-                break;
-              case DecorationStyle.Dotted:
-                context.lineCap = "butt";
-                context.setLineDash([4, 4]);
-                break;
-            }
-
-            if (span.style.decoration & UnderlineDecoration) {
-              context.beginPath();
-              context.moveTo(
-                drawingLeft,
-                currentDrawLine.yOffset + textBaseline + 2
-              );
-              context.lineTo(
-                drawingRight,
-                currentDrawLine.yOffset + textBaseline + 2
-              );
-              if (decorationStyle === DecorationStyle.Double) {
-                context.moveTo(
-                  drawingLeft,
-                  currentDrawLine.yOffset + textBaseline + 4
-                );
-                context.lineTo(
-                  drawingRight,
-                  currentDrawLine.yOffset + textBaseline + 4
-                );
-              }
-              context.stroke();
-            }
-            if (span.style.decoration & LineThroughDecoration) {
-              context.beginPath();
-              context.moveTo(
-                drawingLeft,
-                currentDrawLine.yOffset + textTop + textHeight / 2.0
-              );
-              context.lineTo(
-                drawingRight,
-                currentDrawLine.yOffset + textTop + textHeight / 2.0
-              );
-              if (decorationStyle === DecorationStyle.Double) {
-                context.moveTo(
-                  drawingLeft,
-                  currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2
-                );
-                context.lineTo(
-                  drawingRight,
-                  currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2
-                );
-              }
-              context.stroke();
-            }
-            if (span.style.decoration & OverlineDecoration) {
-              context.beginPath();
-              context.moveTo(drawingLeft, currentDrawLine.yOffset);
-              context.lineTo(drawingRight, currentDrawLine.yOffset);
-
-              if (decorationStyle === DecorationStyle.Double) {
-                context.moveTo(
-                  drawingLeft,
-                  currentDrawLine.yOffset + textTop + 2
-                );
-                context.lineTo(
-                  drawingRight,
-                  currentDrawLine.yOffset + textTop + 2
-                );
-              }
-              context.stroke();
-            }
-            context.restore();
-          }
+          this.drawDecoration(span, context, {
+            currentDrawLine,
+            drawingLeft,
+            drawingRight,
+            textBaseline,
+            textTop,
+            textHeight,
+          });
 
           if (didExceedMaxLines) {
             break;
@@ -274,5 +197,132 @@ export class Drawer {
 
     context.restore();
     return context.getImageData(0, 0, width, height);
+  }
+
+  private drawBackground(
+    span: TextSpan,
+    context: CanvasRenderingContext2D,
+    options: {
+      currentDrawLine: LineMetrics;
+      drawingLeft: number;
+      drawingRight: number;
+      textBaseline: number;
+      textTop: number;
+      textHeight: number;
+    }
+  ) {
+    if (span.style.backgroundColor) {
+      const {
+        currentDrawLine,
+        drawingLeft,
+        drawingRight,
+        textTop,
+        textHeight,
+      } = options;
+      context.fillStyle = span.toBackgroundFillStyle();
+      context.fillRect(
+        drawingLeft,
+        textTop + currentDrawLine.yOffset,
+        drawingRight - drawingLeft,
+        textHeight
+      );
+    }
+  }
+
+  private drawDecoration(
+    span: TextSpan,
+    context: CanvasRenderingContext2D,
+    options: {
+      currentDrawLine: LineMetrics;
+      drawingLeft: number;
+      drawingRight: number;
+      textBaseline: number;
+      textTop: number;
+      textHeight: number;
+    }
+  ) {
+    const {
+      currentDrawLine,
+      drawingLeft,
+      drawingRight,
+      textBaseline,
+      textTop,
+      textHeight,
+    } = options;
+    if (span.style.decoration) {
+      context.save();
+      context.strokeStyle = span.toDecorationStrokeStyle();
+      context.lineWidth =
+        (span.style.decorationThickness ?? 1) *
+        Math.max(1, (span.style.fontSize ?? 12) / 14);
+      const decorationStyle = span.style.decorationStyle?.value;
+
+      switch (decorationStyle) {
+        case DecorationStyle.Dashed:
+          context.lineCap = "butt";
+          context.setLineDash([4, 2]);
+          break;
+        case DecorationStyle.Dotted:
+          context.lineCap = "butt";
+          context.setLineDash([2, 2]);
+          break;
+      }
+
+      if (span.style.decoration & UnderlineDecoration) {
+        context.beginPath();
+        context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 1);
+        context.lineTo(
+          drawingRight,
+          currentDrawLine.yOffset + textBaseline + 1
+        );
+        context.stroke();
+        if (decorationStyle === DecorationStyle.Double) {
+          context.beginPath();
+          context.moveTo(
+            drawingLeft,
+            currentDrawLine.yOffset + textBaseline + 3
+          );
+          context.lineTo(
+            drawingRight,
+            currentDrawLine.yOffset + textBaseline + 3
+          );
+          context.stroke();
+        }
+      }
+      if (span.style.decoration & LineThroughDecoration) {
+        context.beginPath();
+        context.moveTo(
+          drawingLeft,
+          currentDrawLine.yOffset + textTop + textHeight / 2.0
+        );
+        context.lineTo(
+          drawingRight,
+          currentDrawLine.yOffset + textTop + textHeight / 2.0
+        );
+        if (decorationStyle === DecorationStyle.Double) {
+          context.moveTo(
+            drawingLeft,
+            currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2
+          );
+          context.lineTo(
+            drawingRight,
+            currentDrawLine.yOffset + textTop + textHeight / 2.0 + 2
+          );
+        }
+        context.stroke();
+      }
+      if (span.style.decoration & OverlineDecoration) {
+        context.beginPath();
+        context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop);
+        context.lineTo(drawingRight, currentDrawLine.yOffset + textTop);
+
+        if (decorationStyle === DecorationStyle.Double) {
+          context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + 2);
+          context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + 2);
+        }
+        context.stroke();
+      }
+      context.restore();
+    }
   }
 }

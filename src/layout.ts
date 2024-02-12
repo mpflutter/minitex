@@ -1,6 +1,7 @@
 declare var wx: any;
 import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
 import { LetterRect, LineMetrics, Rect } from "./skia";
+import { FontSlant } from "./text_style";
 
 interface LetterMeasureResult {
   useCount: number;
@@ -180,6 +181,9 @@ export class TextLayout {
         if (currentLineMetrics.width + matrics.width < layoutWidth) {
           currentLineMetrics.endIndex += span.text.length;
           currentLineMetrics.width += matrics.width;
+          if (span.style.fontStyle?.slant?.value === FontSlant.Italic) {
+            currentLineMetrics.width += 2;
+          }
         } else {
           let advances = (matrics as any).advances
             ? (matrics as any).advances

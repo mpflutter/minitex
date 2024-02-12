@@ -64,7 +64,7 @@ class TextSpan extends Span {
     }
     toCanvasFont() {
         var _a, _b, _c, _d;
-        let font = `${this.style.fontSize}px system-ui`;
+        let font = `${this.style.fontSize}px system-ui, Roboto`;
         const fontWeight = (_b = (_a = this.style.fontStyle) === null || _a === void 0 ? void 0 : _a.weight) === null || _b === void 0 ? void 0 : _b.value;
         if (fontWeight && fontWeight !== 400) {
             if (fontWeight >= 900) {
