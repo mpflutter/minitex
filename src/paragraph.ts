@@ -37,13 +37,20 @@ export const drawParagraph = function (
     imageData.data,
     4 * imageData.width
   );
-  const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
+  const srcRect = CanvasKit.XYWHRect(
+    0,
+    0,
+    imageData.width,
+    imageData.height
+  );
   const dstRect = CanvasKit.XYWHRect(
-    dx,
-    dy,
+    Math.ceil(dx),
+    Math.ceil(dy),
     imageData.width / Drawer.pixelRatio,
     imageData.height / Drawer.pixelRatio
   );
+  console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
+  console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
   const skPaint = new CanvasKit.Paint();
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };

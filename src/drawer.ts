@@ -9,6 +9,12 @@ import {
   UnderlineDecoration,
 } from "./text_style";
 
+function convertToUpwardToPixelRatio(number: number, pixelRatio: number) {
+  const upwardInt = Math.ceil(number);
+  const remainder = upwardInt % pixelRatio;
+  return remainder === 0 ? upwardInt : upwardInt + (pixelRatio - remainder);
+}
+
 export class Drawer {
   static pixelRatio = 1.0;
   static sharedRenderCanvas: HTMLCanvasElement;
@@ -32,8 +38,14 @@ export class Drawer {
   draw(): ImageData {
     // console.log("paragraph", this.paragraph);
     this.initCanvas();
-    const width = this.paragraph.getMaxWidth() * Drawer.pixelRatio;
-    const height = this.paragraph.getHeight() * Drawer.pixelRatio;
+    const width = convertToUpwardToPixelRatio(
+      this.paragraph.getMaxWidth() * Drawer.pixelRatio,
+      Drawer.pixelRatio
+    );
+    const height = convertToUpwardToPixelRatio(
+      this.paragraph.getHeight() * Drawer.pixelRatio,
+      Drawer.pixelRatio
+    );
     if (width <= 0 || height <= 0) {
       throw "invalid text draw.";
     }
