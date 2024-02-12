@@ -307,7 +307,8 @@ export class TextLayout {
       left: 0,
       yOffset:
         currentLineMetrics.yOffset +
-        currentLineMetrics.height * currentLineMetrics.heightMultiplier,
+        currentLineMetrics.height * currentLineMetrics.heightMultiplier +
+        currentLineMetrics.height * 0.15, // 行间距
       baseline: currentLineMetrics.baseline,
       lineNumber: currentLineMetrics.lineNumber + 1,
     };

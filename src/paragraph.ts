@@ -37,12 +37,7 @@ export const drawParagraph = function (
     imageData.data,
     4 * imageData.width
   );
-  const srcRect = CanvasKit.XYWHRect(
-    0,
-    0,
-    imageData.width,
-    imageData.height
-  );
+  const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
   const dstRect = CanvasKit.XYWHRect(
     Math.ceil(dx),
     Math.ceil(dy),
@@ -176,6 +171,9 @@ export class Paragraph extends EmbindObject {
     let height = 0;
     for (let i = 0; i < lineMetrics.length; i++) {
       height += lineMetrics[i].height * lineMetrics[i].heightMultiplier;
+      if (i > 0 && i < lineMetrics.length) {
+        height += lineMetrics[i].height * 0.15;
+      }
     }
     // console.log("getHeight", height);
     return height;
