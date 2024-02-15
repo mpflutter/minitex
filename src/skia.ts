@@ -60,17 +60,17 @@ export enum TextDirection {
 }
 
 export enum RectHeightStyle {
-  Tight = "Tight",
-  Max = "Max",
-  IncludeLineSpacingMiddle = "IncludeLineSpacingMiddle",
-  IncludeLineSpacingTop = "IncludeLineSpacingTop",
-  IncludeLineSpacingBottom = "IncludeLineSpacingBottom",
-  Strut = "Strut",
+  Tight,
+  Max,
+  IncludeLineSpacingMiddle,
+  IncludeLineSpacingTop,
+  IncludeLineSpacingBottom,
+  Strut,
 }
 
 export enum RectWidthStyle {
-  Tight = "Tight",
-  Max = "Max",
+  Tight,
+  Max,
 }
 
 export enum Affinity {
@@ -94,7 +94,7 @@ export interface GlyphInfo {
    */
   graphemeClusterTextRange: URange;
   /** The writing direction of the grapheme cluster. */
-  dir: TextDirection;
+  dir: SkEnum<TextDirection>;
   /**
    * Whether the associated glyph points to an ellipsis added by the text
    * layout library.
@@ -150,7 +150,7 @@ export interface LineMetrics {
 
 export interface RectWithDirection {
   rect: Rect;
-  dir: TextDirection;
+  dir: SkEnum<TextDirection>;
 }
 
 export interface ShapedLine {

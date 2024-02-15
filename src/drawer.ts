@@ -47,7 +47,9 @@ export class Drawer {
       Drawer.pixelRatio
     );
     if (width <= 0 || height <= 0) {
-      throw "invalid text draw.";
+      const context = Drawer.sharedRenderContext;
+      context.clearRect(0, 0, 1, 1);
+      return context.getImageData(0, 0, 1, 1);
     }
     const context = Drawer.sharedRenderContext;
     context.clearRect(0, 0, width, height);
@@ -144,7 +146,13 @@ export class Drawer {
             return linesDrawingRightBounds[currentDrawLine.lineNumber];
           })();
           const drawingRight =
-            drawingLeft + context.measureText(currentDrawText).width;
+            drawingLeft +
+            (() => {
+              if (currentDrawText === "\n") {
+                return 0;
+              }
+              return context.measureText(currentDrawText).width;
+            })();
 
           linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
 

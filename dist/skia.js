@@ -48,17 +48,17 @@ var TextDirection;
 })(TextDirection || (exports.TextDirection = TextDirection = {}));
 var RectHeightStyle;
 (function (RectHeightStyle) {
-    RectHeightStyle["Tight"] = "Tight";
-    RectHeightStyle["Max"] = "Max";
-    RectHeightStyle["IncludeLineSpacingMiddle"] = "IncludeLineSpacingMiddle";
-    RectHeightStyle["IncludeLineSpacingTop"] = "IncludeLineSpacingTop";
-    RectHeightStyle["IncludeLineSpacingBottom"] = "IncludeLineSpacingBottom";
-    RectHeightStyle["Strut"] = "Strut";
+    RectHeightStyle[RectHeightStyle["Tight"] = 0] = "Tight";
+    RectHeightStyle[RectHeightStyle["Max"] = 1] = "Max";
+    RectHeightStyle[RectHeightStyle["IncludeLineSpacingMiddle"] = 2] = "IncludeLineSpacingMiddle";
+    RectHeightStyle[RectHeightStyle["IncludeLineSpacingTop"] = 3] = "IncludeLineSpacingTop";
+    RectHeightStyle[RectHeightStyle["IncludeLineSpacingBottom"] = 4] = "IncludeLineSpacingBottom";
+    RectHeightStyle[RectHeightStyle["Strut"] = 5] = "Strut";
 })(RectHeightStyle || (exports.RectHeightStyle = RectHeightStyle = {}));
 var RectWidthStyle;
 (function (RectWidthStyle) {
-    RectWidthStyle["Tight"] = "Tight";
-    RectWidthStyle["Max"] = "Max";
+    RectWidthStyle[RectWidthStyle["Tight"] = 0] = "Tight";
+    RectWidthStyle[RectWidthStyle["Max"] = 1] = "Max";
 })(RectWidthStyle || (exports.RectWidthStyle = RectWidthStyle = {}));
 var Affinity;
 (function (Affinity) {

@@ -12,6 +12,8 @@ import {
   RectWidthStyle,
   RectWithDirection,
   ShapedLine,
+  SkEnum,
+  TextDirection,
   URange,
 } from "./skia";
 import { FontSlant, TextStyle } from "./text_style";
@@ -120,7 +122,11 @@ export class TextSpan extends Span {
   }
 }
 
-export class NewlineSpan extends Span {}
+export class NewlineSpan extends TextSpan {
+  constructor() {
+    super("\n", {});
+  }
+}
 
 export class Paragraph extends EmbindObject {
   constructor(readonly spans: Span[], readonly paragraphStyle: ParagraphStyle) {
@@ -128,6 +134,8 @@ export class Paragraph extends EmbindObject {
   }
 
   isMiniTex = true;
+
+  _textLayout = new TextLayout(this);
 
   _didExceedMaxLines = false;
 
@@ -144,8 +152,47 @@ export class Paragraph extends EmbindObject {
    * with the top left corner as the origin, and +y direction as down.
    */
   getGlyphPositionAtCoordinate(dx: number, dy: number): PositionWithAffinity {
+    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+      this._textLayout.layout(-1, true);
+    }
+    for (let index = 0; index < this._textLayout.glyphInfos.length; index++) {
+      const glyphInfo = this._textLayout.glyphInfos[index];
+      const left = glyphInfo.graphemeLayoutBounds[0];
+      const top = glyphInfo.graphemeLayoutBounds[1];
+      const width = glyphInfo.graphemeLayoutBounds[2] - left;
+      const height = glyphInfo.graphemeLayoutBounds[3] - top;
+      if (dx >= left && dx <= left + width && dy >= top && dy <= top + height) {
+        return { pos: index, affinity: { value: Affinity.Downstream } };
+      }
+    }
+    for (let index = 0; index < this._lineMetrics.length; index++) {
+      const lineMetrics = this._lineMetrics[index];
+      const isLastLine = index === this._lineMetrics.length - 1;
+      const left = 0;
+      const top = lineMetrics.yOffset;
+      const width = lineMetrics.width;
+      const height = lineMetrics.height;
+      if (dy >= top && dy <= top + height) {
+        if (dx <= 0) {
+          return {
+            pos: lineMetrics.startIndex,
+            affinity: { value: Affinity.Upstream },
+          };
+        } else if (dx >= width) {
+          return {
+            pos: lineMetrics.endIndex,
+            affinity: { value: Affinity.Upstream },
+          };
+        }
+      }
+      if (dy >= top + height && isLastLine) {
+        return {
+          pos: lineMetrics.endIndex,
+          affinity: { value: Affinity.Upstream },
+        };
+      }
+    }
     return { pos: 0, affinity: { value: Affinity.Upstream } };
-    throw "getGlyphPositionAtCoordinate todo";
   }
 
   /**
@@ -153,7 +200,7 @@ export class Paragraph extends EmbindObject {
    * paragraph coordinate, or null if the paragraph is empty.
    */
   getClosestGlyphInfoAtCoordinate(dx: number, dy: number): GlyphInfo | null {
-    return null;
+    return this.getGlyphInfoAt(this.getGlyphPositionAtCoordinate(dx, dy).pos);
   }
 
   /**
@@ -163,7 +210,10 @@ export class Paragraph extends EmbindObject {
    * visible codepoint.
    */
   getGlyphInfoAt(index: number): GlyphInfo | null {
-    return null;
+    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+      this._textLayout.layout(-1, true);
+    }
+    return this._textLayout.glyphInfos[index] ?? null;
   }
 
   getHeight(): number {
@@ -189,7 +239,7 @@ export class Paragraph extends EmbindObject {
    * points to a codepoint that is logically after the last visible codepoint.
    */
   getLineNumberAt(index: number): number {
-    return 0;
+    return this.getLineMetricsOfRange(index, index)[0]?.lineNumber ?? 0;
   }
 
   _lineMetrics: LineMetrics[] = [];
@@ -275,10 +325,80 @@ export class Paragraph extends EmbindObject {
   getRectsForRange(
     start: number,
     end: number,
-    hStyle: RectHeightStyle,
-    wStyle: RectWidthStyle
+    hStyle: SkEnum<RectHeightStyle>,
+    wStyle: SkEnum<RectWidthStyle>
   ): RectWithDirection[] {
-    return [];
+    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+      this._textLayout.layout(-1, true);
+    }
+    let result: RectWithDirection[] = [];
+    this._lineMetrics.forEach((it) => {
+      const range0 = [start, end];
+      const range1 = [it.startIndex, it.endIndex];
+      const hasIntersection = range0[1] > range1[0] && range1[1] > range0[0];
+      if (hasIntersection) {
+        const intersecRange = [
+          Math.max(range0[0], range1[0]),
+          Math.min(range0[1], range1[1]),
+        ];
+        let currentLineLeft = -1;
+        let currentLineTop = -1;
+        let currentLineWidth = 0;
+        let currentLineHeight = 0;
+        for (let index = intersecRange[0]; index < intersecRange[1]; index++) {
+          const glyphInfo = this._textLayout.glyphInfos[index];
+          if (glyphInfo) {
+            if (currentLineLeft < 0) {
+              currentLineLeft = glyphInfo.graphemeLayoutBounds[0];
+            }
+            if (currentLineTop < 0) {
+              currentLineTop = glyphInfo.graphemeLayoutBounds[1];
+            }
+            currentLineTop = Math.min(
+              currentLineTop,
+              glyphInfo.graphemeLayoutBounds[1]
+            );
+            currentLineWidth =
+              glyphInfo.graphemeLayoutBounds[2] - currentLineLeft;
+            currentLineHeight = Math.max(
+              currentLineHeight,
+              glyphInfo.graphemeLayoutBounds[3] - currentLineTop
+            );
+          }
+        }
+        result.push({
+          rect: new Float32Array([
+            currentLineLeft,
+            currentLineTop,
+            currentLineLeft + currentLineWidth,
+            currentLineTop + currentLineHeight,
+          ]),
+          dir: { value: TextDirection.LTR },
+        });
+      }
+    });
+    if (result.length === 0) {
+      const lastSpan = this.spans[this.spans.length - 1];
+      const lastLine = this._lineMetrics[this._lineMetrics.length - 1];
+      if (
+        end > lastLine.endIndex &&
+        lastSpan instanceof TextSpan &&
+        lastSpan.text.endsWith("\n")
+      ) {
+        return [
+          {
+            rect: new Float32Array([
+              0,
+              lastLine.yOffset,
+              0,
+              lastLine.yOffset + lastLine.height,
+            ]),
+            dir: { value: TextDirection.LTR },
+          },
+        ];
+      }
+    }
+    return result;
   }
 
   /**
@@ -286,7 +406,7 @@ export class Paragraph extends EmbindObject {
    * @param offset
    */
   getWordBoundary(offset: number): URange {
-    throw "getWordBoundary todo";
+    return { start: offset, end: offset };
   }
 
   /**
@@ -301,7 +421,7 @@ export class Paragraph extends EmbindObject {
    * @param width
    */
   layout(width: number): void {
-    new TextLayout(this).layout(width);
+    this._textLayout.layout(width);
   }
 
   /**

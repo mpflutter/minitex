@@ -1,6 +1,12 @@
 declare var wx: any;
 import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
-import { LetterRect, LineMetrics, Rect } from "./skia";
+import {
+  GlyphInfo,
+  LetterRect,
+  LineMetrics,
+  Rect,
+  TextDirection,
+} from "./skia";
 import { FontSlant } from "./text_style";
 
 interface LetterMeasureResult {
@@ -105,6 +111,10 @@ export class TextLayout {
 
   constructor(readonly paragraph: Paragraph) {}
 
+  glyphInfos: GlyphInfo[] = [];
+
+  private previousLayoutWidth: number = 0;
+
   private initCanvas() {
     if (!TextLayout.sharedLayoutCanvas) {
       TextLayout.sharedLayoutCanvas = wx.createOffscreenCanvas({
@@ -119,8 +129,14 @@ export class TextLayout {
     }
   }
 
-  layout(layoutWidth: number): void {
+  layout(layoutWidth: number, forceCalcGlyphInfos: boolean = false): void {
+    if (layoutWidth < 0) {
+      layoutWidth = this.previousLayoutWidth;
+    } else {
+      this.previousLayoutWidth = layoutWidth;
+    }
     this.initCanvas();
+    this.glyphInfos = [];
     let currentLineMetrics: LineMetrics = {
       startIndex: 0,
       endIndex: 0,
@@ -143,6 +159,25 @@ export class TextLayout {
     let lineMetrics: LineMetrics[] = [];
     const spans = this.paragraph.spansWithNewline();
     spans.forEach((span) => {
+      // if (span instanceof NewlineSpan) {
+      //   const newLineMatrics: LineMetrics =
+      //     this.createNewLine(currentLineMetrics);
+      //   lineMetrics.push(currentLineMetrics);
+      //   currentLineMetrics = newLineMatrics;
+      //   const matrics = TextLayout.sharedLayoutContext.measureText("M");
+      //   if (!matrics.fontBoundingBoxAscent) {
+      //     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
+      //     currentLineMetrics.ascent = mHeight * 1.15;
+      //     currentLineMetrics.descent = mHeight * 0.35;
+      //   } else {
+      //     currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
+      //     currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
+      //   }
+      //   currentLineMetrics.height = Math.max(
+      //     currentLineMetrics.height,
+      //     currentLineMetrics.ascent + currentLineMetrics.descent
+      //   );
+      // }
       if (span instanceof TextSpan) {
         TextLayout.sharedLayoutContext.font = span.toCanvasFont();
         const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
@@ -178,19 +213,35 @@ export class TextLayout {
           currentLineMetrics.ascent
         );
 
-        if (currentLineMetrics.width + matrics.width < layoutWidth) {
-          currentLineMetrics.endIndex += span.text.length;
-          currentLineMetrics.width += matrics.width;
-          if (span.style.fontStyle?.slant?.value === FontSlant.Italic) {
-            currentLineMetrics.width += 2;
+        if (
+          currentLineMetrics.width + matrics.width < layoutWidth &&
+          !forceCalcGlyphInfos
+        ) {
+          if (span instanceof NewlineSpan) {
+            const newLineMatrics: LineMetrics =
+              this.createNewLine(currentLineMetrics);
+            lineMetrics.push(currentLineMetrics);
+            currentLineMetrics = newLineMatrics;
+          } else {
+            currentLineMetrics.endIndex += span.text.length;
+            currentLineMetrics.width += matrics.width;
+            if (span.style.fontStyle?.slant?.value === FontSlant.Italic) {
+              currentLineMetrics.width += 2;
+            }
           }
         } else {
-          let advances = (matrics as any).advances
-            ? (matrics as any).advances
+          let advances: number[] = (matrics as any).advances
+            ? [...(matrics as any).advances]
             : LetterMeasurer.measureLetters(
                 span,
                 TextLayout.sharedLayoutContext
               );
+          advances.push(matrics.width);
+
+          if (span instanceof NewlineSpan) {
+            advances = [0, 0];
+          }
+
           let currentWord = "";
           let currentWordWidth = 0;
           let currentWordLength = 0;
@@ -201,6 +252,7 @@ export class TextLayout {
           for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
             currentWord += letter;
+            let currentLetterLeft = currentWordWidth;
             let nextWord = currentWord + span.text[index + 1] ?? "";
             if (advances[index + 1] === undefined) {
               currentWordWidth += advances[index] - advances[index - 1];
@@ -226,6 +278,33 @@ export class TextLayout {
             ) {
               forceBreak = true;
             }
+            if (span instanceof NewlineSpan) {
+              forceBreak = true;
+            }
+
+            const currentGlyphLeft =
+              currentLineMetrics.width + currentLetterLeft;
+            const currentGlyphTop = currentLineMetrics.yOffset;
+            const currentGlyphWidth = (() => {
+              if (advances[index + 1] === undefined) {
+                return advances[index] - advances[index - 1];
+              } else {
+                return advances[index + 1] - advances[index];
+              }
+            })();
+            const currentGlyphHeight = currentLineMetrics.height;
+            const currentGlyphInfo: GlyphInfo = {
+              graphemeLayoutBounds: new Float32Array([
+                currentGlyphLeft,
+                currentGlyphTop,
+                currentGlyphLeft + currentGlyphWidth,
+                currentGlyphTop + currentGlyphHeight,
+              ]),
+              graphemeClusterTextRange: { start: index, end: index + 1 },
+              dir: { value: TextDirection.LTR },
+              isEllipsis: false,
+            };
+            this.glyphInfos.push(currentGlyphInfo);
 
             if (!canBreak) {
               continue;
@@ -255,25 +334,12 @@ export class TextLayout {
               canBreak = true;
             }
           }
+
+          if (currentWord.length > 0) {
+            currentLineMetrics.width += currentWordWidth;
+            currentLineMetrics.endIndex += currentWordLength;
+          }
         }
-      } else if (span instanceof NewlineSpan) {
-        const newLineMatrics: LineMetrics =
-          this.createNewLine(currentLineMetrics);
-        lineMetrics.push(currentLineMetrics);
-        currentLineMetrics = newLineMatrics;
-        const matrics = TextLayout.sharedLayoutContext.measureText("M");
-        if (!matrics.fontBoundingBoxAscent) {
-          const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
-          currentLineMetrics.ascent = mHeight * 1.15;
-          currentLineMetrics.descent = mHeight * 0.35;
-        } else {
-          currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
-          currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
-        }
-        currentLineMetrics.height = Math.max(
-          currentLineMetrics.height,
-          currentLineMetrics.ascent + currentLineMetrics.descent
-        );
       }
     });
     lineMetrics.push(currentLineMetrics);

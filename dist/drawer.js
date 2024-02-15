@@ -30,7 +30,9 @@ class Drawer {
         const width = convertToUpwardToPixelRatio(this.paragraph.getMaxWidth() * Drawer.pixelRatio, Drawer.pixelRatio);
         const height = convertToUpwardToPixelRatio(this.paragraph.getHeight() * Drawer.pixelRatio, Drawer.pixelRatio);
         if (width <= 0 || height <= 0) {
-            throw "invalid text draw.";
+            const context = Drawer.sharedRenderContext;
+            context.clearRect(0, 0, 1, 1);
+            return context.getImageData(0, 0, 1, 1);
         }
         const context = Drawer.sharedRenderContext;
         context.clearRect(0, 0, width, height);
@@ -104,7 +106,13 @@ class Drawer {
                         }
                         return linesDrawingRightBounds[currentDrawLine.lineNumber];
                     })();
-                    const drawingRight = drawingLeft + context.measureText(currentDrawText).width;
+                    const drawingRight = drawingLeft +
+                        (() => {
+                            if (currentDrawText === "\n") {
+                                return 0;
+                            }
+                            return context.measureText(currentDrawText).width;
+                        })();
                     linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
                     const textTop = currentDrawLine.baseline * currentDrawLine.heightMultiplier -
                         span.letterBaseline;

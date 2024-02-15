@@ -98,7 +98,10 @@ class TextSpan extends Span {
     }
 }
 exports.TextSpan = TextSpan;
-class NewlineSpan extends Span {
+class NewlineSpan extends TextSpan {
+    constructor() {
+        super("\n", {});
+    }
 }
 exports.NewlineSpan = NewlineSpan;
 class Paragraph extends skia_1.EmbindObject {
@@ -107,6 +110,7 @@ class Paragraph extends skia_1.EmbindObject {
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
         this.isMiniTex = true;
+        this._textLayout = new layout_1.TextLayout(this);
         this._didExceedMaxLines = false;
         this._lineMetrics = [];
     }
@@ -121,15 +125,55 @@ class Paragraph extends skia_1.EmbindObject {
      * with the top left corner as the origin, and +y direction as down.
      */
     getGlyphPositionAtCoordinate(dx, dy) {
+        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+            this._textLayout.layout(-1, true);
+        }
+        for (let index = 0; index < this._textLayout.glyphInfos.length; index++) {
+            const glyphInfo = this._textLayout.glyphInfos[index];
+            const left = glyphInfo.graphemeLayoutBounds[0];
+            const top = glyphInfo.graphemeLayoutBounds[1];
+            const width = glyphInfo.graphemeLayoutBounds[2] - left;
+            const height = glyphInfo.graphemeLayoutBounds[3] - top;
+            if (dx >= left && dx <= left + width && dy >= top && dy <= top + height) {
+                return { pos: index, affinity: { value: skia_1.Affinity.Downstream } };
+            }
+        }
+        for (let index = 0; index < this._lineMetrics.length; index++) {
+            const lineMetrics = this._lineMetrics[index];
+            const isLastLine = index === this._lineMetrics.length - 1;
+            const left = 0;
+            const top = lineMetrics.yOffset;
+            const width = lineMetrics.width;
+            const height = lineMetrics.height;
+            if (dy >= top && dy <= top + height) {
+                if (dx <= 0) {
+                    return {
+                        pos: lineMetrics.startIndex,
+                        affinity: { value: skia_1.Affinity.Upstream },
+                    };
+                }
+                else if (dx >= width) {
+                    return {
+                        pos: lineMetrics.endIndex,
+                        affinity: { value: skia_1.Affinity.Upstream },
+                    };
+                }
+            }
+            if (dy >= top + height && isLastLine) {
+                return {
+                    pos: lineMetrics.endIndex,
+                    affinity: { value: skia_1.Affinity.Upstream },
+                };
+            }
+        }
         return { pos: 0, affinity: { value: skia_1.Affinity.Upstream } };
-        throw "getGlyphPositionAtCoordinate todo";
     }
     /**
      * Returns the information associated with the closest glyph at the specified
      * paragraph coordinate, or null if the paragraph is empty.
      */
     getClosestGlyphInfoAtCoordinate(dx, dy) {
-        return null;
+        return this.getGlyphInfoAt(this.getGlyphPositionAtCoordinate(dx, dy).pos);
     }
     /**
      * Returns the information associated with the glyph at the specified UTF-16
@@ -138,7 +182,11 @@ class Paragraph extends skia_1.EmbindObject {
      * visible codepoint.
      */
     getGlyphInfoAt(index) {
-        return null;
+        var _a;
+        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+            this._textLayout.layout(-1, true);
+        }
+        return (_a = this._textLayout.glyphInfos[index]) !== null && _a !== void 0 ? _a : null;
     }
     getHeight() {
         const lineMetrics = this.getLineMetrics();
@@ -161,7 +209,8 @@ class Paragraph extends skia_1.EmbindObject {
      * points to a codepoint that is logically after the last visible codepoint.
      */
     getLineNumberAt(index) {
-        return 0;
+        var _a, _b;
+        return (_b = (_a = this.getLineMetricsOfRange(index, index)[0]) === null || _a === void 0 ? void 0 : _a.lineNumber) !== null && _b !== void 0 ? _b : 0;
     }
     getLineMetrics() {
         return this._lineMetrics;
@@ -234,14 +283,76 @@ class Paragraph extends skia_1.EmbindObject {
      * @param wStyle
      */
     getRectsForRange(start, end, hStyle, wStyle) {
-        return [];
+        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
+            this._textLayout.layout(-1, true);
+        }
+        let result = [];
+        this._lineMetrics.forEach((it) => {
+            const range0 = [start, end];
+            const range1 = [it.startIndex, it.endIndex];
+            const hasIntersection = range0[1] > range1[0] && range1[1] > range0[0];
+            if (hasIntersection) {
+                const intersecRange = [
+                    Math.max(range0[0], range1[0]),
+                    Math.min(range0[1], range1[1]),
+                ];
+                let currentLineLeft = -1;
+                let currentLineTop = -1;
+                let currentLineWidth = 0;
+                let currentLineHeight = 0;
+                for (let index = intersecRange[0]; index < intersecRange[1]; index++) {
+                    const glyphInfo = this._textLayout.glyphInfos[index];
+                    if (glyphInfo) {
+                        if (currentLineLeft < 0) {
+                            currentLineLeft = glyphInfo.graphemeLayoutBounds[0];
+                        }
+                        if (currentLineTop < 0) {
+                            currentLineTop = glyphInfo.graphemeLayoutBounds[1];
+                        }
+                        currentLineTop = Math.min(currentLineTop, glyphInfo.graphemeLayoutBounds[1]);
+                        currentLineWidth =
+                            glyphInfo.graphemeLayoutBounds[2] - currentLineLeft;
+                        currentLineHeight = Math.max(currentLineHeight, glyphInfo.graphemeLayoutBounds[3] - currentLineTop);
+                    }
+                }
+                result.push({
+                    rect: new Float32Array([
+                        currentLineLeft,
+                        currentLineTop,
+                        currentLineLeft + currentLineWidth,
+                        currentLineTop + currentLineHeight,
+                    ]),
+                    dir: { value: skia_1.TextDirection.LTR },
+                });
+            }
+        });
+        if (result.length === 0) {
+            const lastSpan = this.spans[this.spans.length - 1];
+            const lastLine = this._lineMetrics[this._lineMetrics.length - 1];
+            if (end > lastLine.endIndex &&
+                lastSpan instanceof TextSpan &&
+                lastSpan.text.endsWith("\n")) {
+                return [
+                    {
+                        rect: new Float32Array([
+                            0,
+                            lastLine.yOffset,
+                            0,
+                            lastLine.yOffset + lastLine.height,
+                        ]),
+                        dir: { value: skia_1.TextDirection.LTR },
+                    },
+                ];
+            }
+        }
+        return result;
     }
     /**
      * Finds the first and last glyphs that define a word containing the glyph at index offset.
      * @param offset
      */
     getWordBoundary(offset) {
-        throw "getWordBoundary todo";
+        return { start: offset, end: offset };
     }
     /**
      * Returns an array of ShapedLine objects, describing the paragraph.
@@ -254,7 +365,7 @@ class Paragraph extends skia_1.EmbindObject {
      * @param width
      */
     layout(width) {
-        new layout_1.TextLayout(this).layout(width);
+        this._textLayout.layout(width);
     }
     /**
      * When called after shaping, returns the glyph IDs which were not matched
