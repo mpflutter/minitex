@@ -218,7 +218,6 @@ class TextLayout {
                             forceBreak = true;
                         }
                         if (span instanceof paragraph_1.NewlineSpan) {
-                            debugger;
                             forceBreak = true;
                         }
                         const currentGlyphLeft = currentLineMetrics.width + currentLetterLeft;

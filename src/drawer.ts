@@ -1,6 +1,6 @@
 declare var wx: any;
 import { TextLayout, isSquareCharacter } from "./layout";
-import { Paragraph, TextSpan } from "./paragraph";
+import { NewlineSpan, Paragraph, TextSpan } from "./paragraph";
 import { LineMetrics, TextAlign, TextDirection } from "./skia";
 import {
   DecorationStyle,
@@ -68,6 +68,10 @@ export class Drawer {
     spans.forEach((span) => {
       if (didExceedMaxLines) return;
       if (span instanceof TextSpan) {
+        if (span instanceof NewlineSpan) {
+          spanLetterStartIndex++;
+          return;
+        }
         let spanUndrawLength = span.text.length;
         let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
         const lineMetrics = this.paragraph.getLineMetricsOfRange(
@@ -174,7 +178,7 @@ export class Drawer {
 
           context.save();
           if (span.style.shadows && span.style.shadows.length > 0) {
-            console.log("span.style.shadows[0]", span.style.shadows[0]);
+            // console.log("span.style.shadows[0]", span.style.shadows[0]);
             context.shadowColor = span.style.shadows[0].color
               ? span.colorToHex(span.style.shadows[0].color as Float32Array)
               : "transparent";
@@ -189,12 +193,12 @@ export class Drawer {
             textBaseline + currentDrawLine.yOffset
           );
           context.restore();
-          // console.log(
-          //   "fillText",
-          //   currentDrawText,
-          //   drawingLeft,
-          //   textBaseline + currentDrawLine.yOffset
-          // );
+          console.log(
+            "fillText",
+            currentDrawText,
+            drawingLeft,
+            textBaseline + currentDrawLine.yOffset
+          );
 
           this.drawDecoration(span, context, {
             currentDrawLine,
