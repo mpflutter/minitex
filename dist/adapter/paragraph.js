@@ -7,12 +7,14 @@ const span_1 = require("../impl/span");
 const logger_1 = require("../logger");
 const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
+    var _a;
     let drawStartTime;
     if (logger_1.logger.profileMode) {
         drawStartTime = new Date().getTime();
     }
     const drawer = new drawer_1.Drawer(paragraph);
-    const imageData = drawer.draw();
+    const imageData = (_a = paragraph.imageDataCache) !== null && _a !== void 0 ? _a : drawer.draw();
+    paragraph.imageDataCache = imageData;
     const canvasImg = CanvasKit.MakeImage({
         width: imageData.width,
         height: imageData.height,
@@ -284,6 +286,7 @@ class Paragraph extends skia_1.SkEmbindObject {
      * @param width
      */
     layout(width) {
+        this.imageDataCache = undefined;
         this._textLayout.layout(width);
     }
     /**

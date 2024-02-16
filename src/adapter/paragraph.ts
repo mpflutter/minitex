@@ -30,7 +30,8 @@ export const drawParagraph = function (
     drawStartTime = new Date().getTime();
   }
   const drawer = new Drawer(paragraph);
-  const imageData = drawer.draw();
+  const imageData = paragraph.imageDataCache ?? drawer.draw();
+  paragraph.imageDataCache = imageData;
   const canvasImg = CanvasKit.MakeImage(
     {
       width: imageData.width,
@@ -64,6 +65,7 @@ export class Paragraph extends SkEmbindObject {
 
   public _type = "SkParagraph";
   public isMiniTex = true;
+  public imageDataCache?: ImageData;
   private _textLayout = new TextLayout(this);
 
   didExceedMaxLines(): boolean {
@@ -341,6 +343,7 @@ export class Paragraph extends SkEmbindObject {
    * @param width
    */
   layout(width: number): void {
+    this.imageDataCache = undefined;
     this._textLayout.layout(width);
   }
 

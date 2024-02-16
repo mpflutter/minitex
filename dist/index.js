@@ -4,10 +4,9 @@ exports.MiniTex = void 0;
 const drawer_1 = require("./impl/drawer");
 const paragraph_1 = require("./adapter/paragraph");
 const paragraph_builder_1 = require("./adapter/paragraph_builder");
-const logger_1 = require("./logger");
 class MiniTex {
     static install(canvasKit, pixelRatio) {
-        logger_1.logger.profileMode = true;
+        // logger.profileMode = true;
         drawer_1.Drawer.pixelRatio = pixelRatio;
         const originMakeFromFontCollectionMethod = canvasKit.ParagraphBuilder.MakeFromFontCollection;
         canvasKit.ParagraphBuilder.MakeFromFontCollection = function (style, fontCollection) {

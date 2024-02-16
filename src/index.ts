@@ -5,7 +5,7 @@ import { logger } from "./logger";
 
 export class MiniTex {
   static install(canvasKit: any, pixelRatio: number) {
-    logger.profileMode = true;
+    // logger.profileMode = true;
     Drawer.pixelRatio = pixelRatio;
     const originMakeFromFontCollectionMethod =
       canvasKit.ParagraphBuilder.MakeFromFontCollection;
