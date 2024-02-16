@@ -1,6 +1,9 @@
-import { Color, EmbindObject, StrokeCap, StrokeJoin } from "./skia";
+import { valueOfRGBAInt } from "../util";
+import { Color, SkEmbindObject, StrokeCap, StrokeJoin } from "./skia";
 
-export class Paint extends EmbindObject {
+export class Paint extends SkEmbindObject {
+  public _type = "SkPaint";
+
   /**
    * Returns a copy of this paint.
    */
@@ -10,7 +13,7 @@ export class Paint extends EmbindObject {
     return newValue;
   }
 
-  _color: Color = Float32Array.from([0, 0, 0, 255]);
+  private _color: Color = valueOfRGBAInt(0, 0, 0, 255);
 
   /**
    * Retrieves the alpha and RGB unpremultiplied. RGB are extended sRGB values
@@ -20,7 +23,7 @@ export class Paint extends EmbindObject {
     return this._color;
   }
 
-  _strokeCap = StrokeCap.Butt;
+  private _strokeCap = StrokeCap.Butt;
 
   /**
    * Returns the geometry drawn at the beginning and end of strokes.
@@ -29,7 +32,7 @@ export class Paint extends EmbindObject {
     return this._strokeCap;
   }
 
-  _strokeJoin = StrokeJoin.Bevel;
+  private _strokeJoin = StrokeJoin.Bevel;
 
   /**
    * Returns the geometry drawn at the corners of strokes.
@@ -38,7 +41,7 @@ export class Paint extends EmbindObject {
     return this._strokeJoin;
   }
 
-  _strokeMiter = 0;
+  private _strokeMiter = 0;
 
   /**
    *  Returns the limit at which a sharp corner is drawn beveled.
@@ -47,7 +50,7 @@ export class Paint extends EmbindObject {
     return this._strokeMiter;
   }
 
-  _strokeWidth = 0;
+  private _strokeWidth = 0;
 
   /**
    * Returns the thickness of the pen used to outline the shape.
@@ -56,7 +59,7 @@ export class Paint extends EmbindObject {
     return this._strokeWidth;
   }
 
-  _alpha = 1.0;
+  private _alpha = 1.0;
 
   /**
    * Replaces alpha, leaving RGBA unchanged. 0 means fully transparent, 1.0 means opaque.
@@ -66,7 +69,7 @@ export class Paint extends EmbindObject {
     this._alpha = alpha;
   }
 
-  _antiAlias = true;
+  private _antiAlias = true;
 
   /**
    * Requests, but does not require, that edge pixels draw opaque or with
@@ -118,7 +121,7 @@ export class Paint extends EmbindObject {
    * @param colorSpace - defaults to sRGB
    */
   setColorComponents(r: number, g: number, b: number, a: number): void {
-    this.setColor(Float32Array.from([r, g, b, a]));
+    this.setColor(valueOfRGBAInt(r, g, b, a));
   }
 
   /**

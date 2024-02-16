@@ -1,7 +1,9 @@
+import { Span, TextSpan } from "../impl/span";
+import { logger } from "../logger";
 import { Paint } from "./paint";
-import { Paragraph, Span, TextSpan } from "./paragraph";
+import { Paragraph } from "./paragraph";
 import {
-  EmbindObject,
+  SkEmbindObject,
   InputGraphemes,
   InputLineBreaks,
   InputWords,
@@ -9,9 +11,9 @@ import {
   PlaceholderAlignment,
   TextBaseline,
 } from "./skia";
-import { TextStyle } from "./text_style";
+import { TextStyle } from "./skia";
 
-export class ParagraphBuilder extends EmbindObject {
+export class ParagraphBuilder extends SkEmbindObject {
   static MakeFromFontCollection(
     originMakeFromFontCollectionMethod: (
       style: ParagraphStyle,
@@ -22,10 +24,10 @@ export class ParagraphBuilder extends EmbindObject {
   ) {
     const fontFamilies = style.textStyle?.fontFamilies;
     if (fontFamilies && fontFamilies[0] === "MiniTex") {
-      // console.log("use minitex");
+      logger.info("use minitex paragraph builder.", fontFamilies);
       return new ParagraphBuilder(style);
     } else {
-      // console.log("use old", fontFamilies);
+      logger.info("use skia paragraph builder.", fontFamilies);
       return originMakeFromFontCollectionMethod(style, fontCollection);
     }
   }
@@ -53,9 +55,7 @@ export class ParagraphBuilder extends EmbindObject {
     alignment?: PlaceholderAlignment,
     baseline?: TextBaseline,
     offset?: number
-  ): void {
-    // console.log("addPlaceholder", width, height, alignment, baseline, offset);
-  }
+  ): void {}
 
   /**
    * Adds text to the builder. Forms the proper runs to use the upper-most style
@@ -63,7 +63,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param str
    */
   addText(str: string): void {
-    // console.log("addText", str);
+    logger.debug("ParagraphBuilder.addText", str);
     let mergedStyle: TextStyle = {};
     this.styles.forEach((it) => {
       Object.assign(mergedStyle, it);
@@ -162,7 +162,7 @@ export class ParagraphBuilder extends EmbindObject {
    * of text such as bolding.
    */
   pop(): void {
-    // console.log("pop");
+    logger.debug("ParagraphBuilder.pop");
     this.styles.pop();
   }
 
@@ -172,7 +172,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param textStyle
    */
   pushStyle(textStyle: TextStyle): void {
-    // console.log("pushStyle", textStyle);
+    logger.debug("ParagraphBuilder.pushStyle", textStyle);
     this.styles.push(textStyle);
   }
 
@@ -183,7 +183,7 @@ export class ParagraphBuilder extends EmbindObject {
    * @param bg
    */
   pushPaintStyle(textStyle: TextStyle, fg: Paint, bg: Paint): void {
-    // console.log("pushPaintStyle", textStyle, fg, bg);
+    logger.debug("ParagraphBuilder.pushPaintStyle", textStyle, fg, bg);
     this.styles.push(textStyle);
   }
 
@@ -192,6 +192,7 @@ export class ParagraphBuilder extends EmbindObject {
    * been added, but keeping the initial ParagraphStyle.
    */
   reset(): void {
+    logger.debug("ParagraphBuilder.reset");
     this.spans = [];
     this.styles = [];
   }

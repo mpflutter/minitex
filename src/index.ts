@@ -1,6 +1,6 @@
-import { Drawer } from "./drawer";
-import { drawParagraph } from "./paragraph";
-import { ParagraphBuilder } from "./paragraph_builder";
+import { Drawer } from "./impl/drawer";
+import { drawParagraph } from "./adapter/paragraph";
+import { ParagraphBuilder } from "./adapter/paragraph_builder";
 
 export class MiniTex {
   static install(canvasKit: any, pixelRatio: number) {
@@ -26,7 +26,7 @@ export class MiniTex {
       if (paragraph.isMiniTex === true) {
         drawParagraph(canvasKit, this, paragraph, dx, dy);
       } else {
-        originDrawParagraphMethod.apply(this, [paragraph, dx, dy])
+        originDrawParagraphMethod.apply(this, [paragraph, dx, dy]);
       }
     };
   }

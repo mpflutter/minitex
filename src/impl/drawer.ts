@@ -1,19 +1,19 @@
 declare var wx: any;
-import { TextLayout, isSquareCharacter } from "./layout";
-import { NewlineSpan, Paragraph, TextSpan } from "./paragraph";
-import { LineMetrics, TextAlign, TextDirection } from "./skia";
+import { Paragraph } from "../adapter/paragraph";
+import { LineMetrics, TextAlign, TextDirection } from "../adapter/skia";
 import {
   DecorationStyle,
   LineThroughDecoration,
   OverlineDecoration,
   UnderlineDecoration,
-} from "./text_style";
-
-function convertToUpwardToPixelRatio(number: number, pixelRatio: number) {
-  const upwardInt = Math.ceil(number);
-  const remainder = upwardInt % pixelRatio;
-  return remainder === 0 ? upwardInt : upwardInt + (pixelRatio - remainder);
-}
+} from "../adapter/skia";
+import { NewlineSpan, TextSpan, spanWithNewline } from "./span";
+import {
+  colorToHex,
+  convertToUpwardToPixelRatio,
+  isSquareCharacter,
+} from "../util";
+import { logger } from "../logger";
 
 export class Drawer {
   static pixelRatio = 1.0;
@@ -26,8 +26,8 @@ export class Drawer {
     if (!Drawer.sharedRenderCanvas) {
       Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
         type: "2d",
-        width: 1000 * Drawer.pixelRatio,
-        height: 1000 * Drawer.pixelRatio,
+        width: Math.min(4000, 1000 * Drawer.pixelRatio),
+        height: Math.min(4000, 1000 * Drawer.pixelRatio),
       });
       Drawer.sharedRenderContext = Drawer.sharedRenderCanvas!.getContext(
         "2d"
@@ -36,7 +36,6 @@ export class Drawer {
   }
 
   draw(): ImageData {
-    // console.log("paragraph", this.paragraph);
     this.initCanvas();
     const width = convertToUpwardToPixelRatio(
       this.paragraph.getMaxWidth() * Drawer.pixelRatio,
@@ -60,9 +59,9 @@ export class Drawer {
     let spanLetterStartIndex = 0;
     let linesDrawingRightBounds: Record<number, number> = {};
 
-    const spans = this.paragraph.spansWithNewline();
+    const spans = spanWithNewline(this.paragraph.spans);
     let linesUndrawed: Record<number, number> = {};
-    this.paragraph._lineMetrics.forEach((it) => {
+    this.paragraph.getLineMetrics().forEach((it) => {
       linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
     });
     spans.forEach((span) => {
@@ -80,7 +79,6 @@ export class Drawer {
         );
 
         context.font = span.toCanvasFont();
-        // console.log("font", span.toCanvasFont())
 
         while (spanUndrawLength > 0) {
           let currentDrawText = "";
@@ -149,6 +147,7 @@ export class Drawer {
             }
             return linesDrawingRightBounds[currentDrawLine.lineNumber];
           })();
+
           const drawingRight =
             drawingLeft +
             (() => {
@@ -178,9 +177,8 @@ export class Drawer {
 
           context.save();
           if (span.style.shadows && span.style.shadows.length > 0) {
-            // console.log("span.style.shadows[0]", span.style.shadows[0]);
             context.shadowColor = span.style.shadows[0].color
-              ? span.colorToHex(span.style.shadows[0].color as Float32Array)
+              ? colorToHex(span.style.shadows[0].color as Float32Array)
               : "transparent";
             context.shadowOffsetX = span.style.shadows[0].offset?.[0] ?? 0;
             context.shadowOffsetY = span.style.shadows[0].offset?.[1] ?? 0;
@@ -193,8 +191,9 @@ export class Drawer {
             textBaseline + currentDrawLine.yOffset
           );
           context.restore();
-          console.log(
-            "fillText",
+
+          logger.debug(
+            "Drawer.draw.fillText",
             currentDrawText,
             drawingLeft,
             textBaseline + currentDrawLine.yOffset

@@ -1,14 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Paragraph = exports.NewlineSpan = exports.TextSpan = exports.Span = exports.drawParagraph = void 0;
-const drawer_1 = require("./drawer");
-const layout_1 = require("./layout");
+exports.Paragraph = exports.drawParagraph = void 0;
+const drawer_1 = require("../impl/drawer");
+const layout_1 = require("../impl/layout");
+const span_1 = require("../impl/span");
 const skia_1 = require("./skia");
-const skia_2 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     const drawer = new drawer_1.Drawer(paragraph);
     const imageData = drawer.draw();
-    // const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
     const canvasImg = CanvasKit.MakeImage({
         width: imageData.width,
         height: imageData.height,
@@ -18,104 +17,21 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     }, imageData.data, 4 * imageData.width);
     const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
     const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
-    // console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
-    // console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
     const skPaint = new CanvasKit.Paint();
     skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };
 exports.drawParagraph = drawParagraph;
-class Span {
-    constructor() {
-        this.letterBaseline = 0;
-        this.letterHeight = 0;
-        this.lettersBounding = [];
-    }
-}
-exports.Span = Span;
-class TextSpan extends Span {
-    constructor(text, style) {
-        super();
-        this.text = text;
-        this.style = style;
-    }
-    toBackgroundFillStyle() {
-        if (this.style.backgroundColor) {
-            return this.colorToHex(this.style.backgroundColor);
-        }
-        else {
-            return "#000000";
-        }
-    }
-    toTextFillStyle() {
-        if (this.style.color) {
-            return this.colorToHex(this.style.color);
-        }
-        else {
-            return "#000000";
-        }
-    }
-    toDecorationStrokeStyle() {
-        if (this.style.decorationColor) {
-            return this.colorToHex(this.style.decorationColor);
-        }
-        else {
-            return "#000000";
-        }
-    }
-    toCanvasFont() {
-        var _a, _b, _c, _d;
-        let font = `${this.style.fontSize}px system-ui, Roboto`;
-        const fontWeight = (_b = (_a = this.style.fontStyle) === null || _a === void 0 ? void 0 : _a.weight) === null || _b === void 0 ? void 0 : _b.value;
-        if (fontWeight && fontWeight !== 400) {
-            if (fontWeight >= 900) {
-                font = "900 " + font;
-            }
-            else {
-                font = fontWeight.toFixed(0) + " " + font;
-            }
-        }
-        const slant = (_d = (_c = this.style.fontStyle) === null || _c === void 0 ? void 0 : _c.slant) === null || _d === void 0 ? void 0 : _d.value;
-        if (slant) {
-            switch (slant) {
-                case skia_2.FontSlant.Italic:
-                    font = "italic " + font;
-                    break;
-                case skia_2.FontSlant.Oblique:
-                    font = "oblique " + font;
-                    break;
-            }
-        }
-        return font;
-    }
-    colorToHex(rgbaColor) {
-        const r = Math.round(rgbaColor[0] * 255).toString(16);
-        const g = Math.round(rgbaColor[1] * 255).toString(16);
-        const b = Math.round(rgbaColor[2] * 255).toString(16);
-        const a = Math.round(rgbaColor[3] * 255).toString(16);
-        const padHex = (hex) => (hex.length === 1 ? "0" + hex : hex);
-        const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
-        return hexColor;
-    }
-}
-exports.TextSpan = TextSpan;
-class NewlineSpan extends TextSpan {
-    constructor() {
-        super("\n", {});
-    }
-}
-exports.NewlineSpan = NewlineSpan;
-class Paragraph extends skia_1.EmbindObject {
+class Paragraph extends skia_1.SkEmbindObject {
     constructor(spans, paragraphStyle) {
         super();
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
+        this._type = "SkParagraph";
         this.isMiniTex = true;
         this._textLayout = new layout_1.TextLayout(this);
-        this._didExceedMaxLines = false;
-        this._lineMetrics = [];
     }
     didExceedMaxLines() {
-        return this._didExceedMaxLines;
+        return this._textLayout.didExceedMaxLines;
     }
     getAlphabeticBaseline() {
         return 0;
@@ -125,9 +41,7 @@ class Paragraph extends skia_1.EmbindObject {
      * with the top left corner as the origin, and +y direction as down.
      */
     getGlyphPositionAtCoordinate(dx, dy) {
-        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-            this._textLayout.layout(-1, true);
-        }
+        this._textLayout.measureGlyphIfNeeded();
         for (let index = 0; index < this._textLayout.glyphInfos.length; index++) {
             const glyphInfo = this._textLayout.glyphInfos[index];
             const left = glyphInfo.graphemeLayoutBounds[0];
@@ -138,9 +52,9 @@ class Paragraph extends skia_1.EmbindObject {
                 return { pos: index, affinity: { value: skia_1.Affinity.Downstream } };
             }
         }
-        for (let index = 0; index < this._lineMetrics.length; index++) {
-            const lineMetrics = this._lineMetrics[index];
-            const isLastLine = index === this._lineMetrics.length - 1;
+        for (let index = 0; index < this._textLayout.lineMetrics.length; index++) {
+            const lineMetrics = this._textLayout.lineMetrics[index];
+            const isLastLine = index === this._textLayout.lineMetrics.length - 1;
             const left = 0;
             const top = lineMetrics.yOffset;
             const width = lineMetrics.width;
@@ -183,9 +97,7 @@ class Paragraph extends skia_1.EmbindObject {
      */
     getGlyphInfoAt(index) {
         var _a;
-        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-            this._textLayout.layout(-1, true);
-        }
+        this._textLayout.measureGlyphIfNeeded();
         return (_a = this._textLayout.glyphInfos[index]) !== null && _a !== void 0 ? _a : null;
     }
     getHeight() {
@@ -213,7 +125,7 @@ class Paragraph extends skia_1.EmbindObject {
         return (_b = (_a = this.getLineMetricsOfRange(index, index)[0]) === null || _a === void 0 ? void 0 : _a.lineNumber) !== null && _b !== void 0 ? _b : 0;
     }
     getLineMetrics() {
-        return this._lineMetrics;
+        return this._textLayout.lineMetrics;
     }
     /**
      * Returns the LineMetrics of the line at the specified line number, or null
@@ -222,11 +134,11 @@ class Paragraph extends skia_1.EmbindObject {
      */
     getLineMetricsAt(lineNumber) {
         var _a;
-        return (_a = this._lineMetrics[lineNumber]) !== null && _a !== void 0 ? _a : null;
+        return (_a = this._textLayout.lineMetrics[lineNumber]) !== null && _a !== void 0 ? _a : null;
     }
     getLineMetricsOfRange(start, end) {
         let lineMetrics = [];
-        this._lineMetrics.forEach((it) => {
+        this._textLayout.lineMetrics.forEach((it) => {
             const range0 = [start, end];
             const range1 = [it.startIndex, it.endIndex];
             const hasIntersection = range0[1] >= range1[0] && range1[1] >= range0[0];
@@ -270,7 +182,7 @@ class Paragraph extends skia_1.EmbindObject {
      * Returns the total number of visible lines in the paragraph.
      */
     getNumberOfLines() {
-        return this._lineMetrics.length;
+        return this._textLayout.lineMetrics.length;
     }
     getRectsForPlaceholders() {
         return [];
@@ -283,11 +195,9 @@ class Paragraph extends skia_1.EmbindObject {
      * @param wStyle
      */
     getRectsForRange(start, end, hStyle, wStyle) {
-        if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-            this._textLayout.layout(-1, true);
-        }
+        this._textLayout.measureGlyphIfNeeded();
         let result = [];
-        this._lineMetrics.forEach((it) => {
+        this._textLayout.lineMetrics.forEach((it) => {
             const range0 = [start, end];
             const range1 = [it.startIndex, it.endIndex];
             const hasIntersection = range0[1] > range1[0] && range1[1] > range0[0];
@@ -328,9 +238,9 @@ class Paragraph extends skia_1.EmbindObject {
         });
         if (result.length === 0) {
             const lastSpan = this.spans[this.spans.length - 1];
-            const lastLine = this._lineMetrics[this._lineMetrics.length - 1];
+            const lastLine = this._textLayout.lineMetrics[this._textLayout.lineMetrics.length - 1];
             if (end > lastLine.endIndex &&
-                lastSpan instanceof TextSpan &&
+                lastSpan instanceof span_1.TextSpan &&
                 lastSpan.text.endsWith("\n")) {
                 return [
                     {
@@ -373,26 +283,6 @@ class Paragraph extends skia_1.EmbindObject {
      */
     unresolvedCodepoints() {
         return [];
-    }
-    spansWithNewline() {
-        let result = [];
-        this.spans.forEach((span) => {
-            if (span instanceof TextSpan) {
-                if (span.text.indexOf("\n") >= 0) {
-                    const components = span.text.split("\n");
-                    for (let index = 0; index < components.length; index++) {
-                        const component = components[index];
-                        if (index > 0) {
-                            result.push(new NewlineSpan());
-                        }
-                        result.push(new TextSpan(component, span.style));
-                    }
-                    return;
-                }
-            }
-            result.push(span);
-        });
-        return result;
     }
 }
 exports.Paragraph = Paragraph;

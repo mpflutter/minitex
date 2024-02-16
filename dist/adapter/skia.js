@@ -1,20 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.StrokeJoin = exports.StrokeCap = exports.TextBaseline = exports.PlaceholderAlignment = exports.EmbindObject = void 0;
-class EmbindObject {
+exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.TextBaseline = exports.StrokeJoin = exports.StrokeCap = exports.PlaceholderAlignment = exports.SkEmbindObject = void 0;
+class SkEmbindObject {
     constructor() {
         this._type = "";
+        this._deleted = false;
     }
-    delete() { }
-    deleteLater() { }
+    delete() {
+        this._deleted = true;
+    }
+    deleteLater() {
+        this._deleted = true;
+    }
     isAliasOf(other) {
-        return false;
+        return other._type === this._type;
     }
     isDeleted() {
-        return false;
+        return this._deleted;
     }
 }
-exports.EmbindObject = EmbindObject;
+exports.SkEmbindObject = SkEmbindObject;
 var PlaceholderAlignment;
 (function (PlaceholderAlignment) {
     PlaceholderAlignment["Baseline"] = "Baseline";
@@ -24,11 +29,6 @@ var PlaceholderAlignment;
     PlaceholderAlignment["Bottom"] = "Bottom";
     PlaceholderAlignment["Middle"] = "Middle";
 })(PlaceholderAlignment || (exports.PlaceholderAlignment = PlaceholderAlignment = {}));
-var TextBaseline;
-(function (TextBaseline) {
-    TextBaseline["Alphabetic"] = "Alphabetic";
-    TextBaseline["Ideographic"] = "Ideographic";
-})(TextBaseline || (exports.TextBaseline = TextBaseline = {}));
 var StrokeCap;
 (function (StrokeCap) {
     StrokeCap["Butt"] = "Butt";
@@ -41,6 +41,11 @@ var StrokeJoin;
     StrokeJoin["Miter"] = "Miter";
     StrokeJoin["Round"] = "Round";
 })(StrokeJoin || (exports.StrokeJoin = StrokeJoin = {}));
+var TextBaseline;
+(function (TextBaseline) {
+    TextBaseline[TextBaseline["Alphabetic"] = 0] = "Alphabetic";
+    TextBaseline[TextBaseline["Ideographic"] = 1] = "Ideographic";
+})(TextBaseline || (exports.TextBaseline = TextBaseline = {}));
 var TextDirection;
 (function (TextDirection) {
     TextDirection[TextDirection["RTL"] = 0] = "RTL";

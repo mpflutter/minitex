@@ -1,15 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drawer = void 0;
-const layout_1 = require("./layout");
-const paragraph_1 = require("./paragraph");
-const skia_1 = require("./skia");
-const skia_2 = require("./skia");
-function convertToUpwardToPixelRatio(number, pixelRatio) {
-    const upwardInt = Math.ceil(number);
-    const remainder = upwardInt % pixelRatio;
-    return remainder === 0 ? upwardInt : upwardInt + (pixelRatio - remainder);
-}
+const skia_1 = require("../adapter/skia");
+const skia_2 = require("../adapter/skia");
+const span_1 = require("./span");
+const util_1 = require("../util");
+const logger_1 = require("../logger");
 class Drawer {
     constructor(paragraph) {
         this.paragraph = paragraph;
@@ -18,17 +14,16 @@ class Drawer {
         if (!Drawer.sharedRenderCanvas) {
             Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
                 type: "2d",
-                width: 1000 * Drawer.pixelRatio,
-                height: 1000 * Drawer.pixelRatio,
+                width: Math.min(4000, 1000 * Drawer.pixelRatio),
+                height: Math.min(4000, 1000 * Drawer.pixelRatio),
             });
             Drawer.sharedRenderContext = Drawer.sharedRenderCanvas.getContext("2d");
         }
     }
     draw() {
-        // console.log("paragraph", this.paragraph);
         this.initCanvas();
-        const width = convertToUpwardToPixelRatio(this.paragraph.getMaxWidth() * Drawer.pixelRatio, Drawer.pixelRatio);
-        const height = convertToUpwardToPixelRatio(this.paragraph.getHeight() * Drawer.pixelRatio, Drawer.pixelRatio);
+        const width = (0, util_1.convertToUpwardToPixelRatio)(this.paragraph.getMaxWidth() * Drawer.pixelRatio, Drawer.pixelRatio);
+        const height = (0, util_1.convertToUpwardToPixelRatio)(this.paragraph.getHeight() * Drawer.pixelRatio, Drawer.pixelRatio);
         if (width <= 0 || height <= 0) {
             const context = Drawer.sharedRenderContext;
             context.clearRect(0, 0, 1, 1);
@@ -41,17 +36,17 @@ class Drawer {
         let didExceedMaxLines = false;
         let spanLetterStartIndex = 0;
         let linesDrawingRightBounds = {};
-        const spans = this.paragraph.spansWithNewline();
+        const spans = (0, span_1.spanWithNewline)(this.paragraph.spans);
         let linesUndrawed = {};
-        this.paragraph._lineMetrics.forEach((it) => {
+        this.paragraph.getLineMetrics().forEach((it) => {
             linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
         });
         spans.forEach((span) => {
             var _a, _b, _c, _d, _e, _f;
             if (didExceedMaxLines)
                 return;
-            if (span instanceof paragraph_1.TextSpan) {
-                if (span instanceof paragraph_1.NewlineSpan) {
+            if (span instanceof span_1.TextSpan) {
+                if (span instanceof span_1.NewlineSpan) {
                     spanLetterStartIndex++;
                     return;
                 }
@@ -59,7 +54,6 @@ class Drawer {
                 let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
                 context.font = span.toCanvasFont();
-                // console.log("font", span.toCanvasFont())
                 while (spanUndrawLength > 0) {
                     let currentDrawText = "";
                     let currentDrawLine;
@@ -80,7 +74,7 @@ class Drawer {
                         this.paragraph.paragraphStyle.maxLines ===
                             currentDrawLine.lineNumber + 1 &&
                         linesUndrawed[currentDrawLine.lineNumber] <= 0) {
-                        const trimLength = (0, layout_1.isSquareCharacter)(currentDrawText[currentDrawText.length - 1])
+                        const trimLength = (0, util_1.isSquareCharacter)(currentDrawText[currentDrawText.length - 1])
                             ? 1
                             : 3;
                         currentDrawText =
@@ -132,9 +126,8 @@ class Drawer {
                     });
                     context.save();
                     if (span.style.shadows && span.style.shadows.length > 0) {
-                        // console.log("span.style.shadows[0]", span.style.shadows[0]);
                         context.shadowColor = span.style.shadows[0].color
-                            ? span.colorToHex(span.style.shadows[0].color)
+                            ? (0, util_1.colorToHex)(span.style.shadows[0].color)
                             : "transparent";
                         context.shadowOffsetX = (_c = (_b = span.style.shadows[0].offset) === null || _b === void 0 ? void 0 : _b[0]) !== null && _c !== void 0 ? _c : 0;
                         context.shadowOffsetY = (_e = (_d = span.style.shadows[0].offset) === null || _d === void 0 ? void 0 : _d[1]) !== null && _e !== void 0 ? _e : 0;
@@ -143,7 +136,7 @@ class Drawer {
                     context.fillStyle = span.toTextFillStyle();
                     context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
                     context.restore();
-                    console.log("fillText", currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                    logger_1.logger.debug("Drawer.draw.fillText", currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
                     this.drawDecoration(span, context, {
                         currentDrawLine,
                         drawingLeft,

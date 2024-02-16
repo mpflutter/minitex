@@ -1,10 +1,10 @@
-import { Drawer } from "./drawer";
-import { TextLayout } from "./layout";
+import { Drawer } from "../impl/drawer";
+import { TextLayout } from "../impl/layout";
+import { Span, TextSpan } from "../impl/span";
 import {
   Affinity,
-  EmbindObject,
+  SkEmbindObject,
   GlyphInfo,
-  LetterRect,
   LineMetrics,
   ParagraphStyle,
   PositionWithAffinity,
@@ -16,7 +16,6 @@ import {
   TextDirection,
   URange,
 } from "./skia";
-import { FontSlant, TextStyle } from "./text_style";
 
 export const drawParagraph = function (
   CanvasKit: any,
@@ -27,7 +26,6 @@ export const drawParagraph = function (
 ) {
   const drawer = new Drawer(paragraph);
   const imageData = drawer.draw();
-  // const canvasImg = CanvasKit.MakeLazyImageFromTextureSource(imageData);
   const canvasImg = CanvasKit.MakeImage(
     {
       width: imageData.width,
@@ -46,101 +44,21 @@ export const drawParagraph = function (
     imageData.width / Drawer.pixelRatio,
     imageData.height / Drawer.pixelRatio
   );
-  // console.log("srcRect", srcRect[0], srcRect[1], srcRect[2], srcRect[3]);
-  // console.log("dstRect", dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
   const skPaint = new CanvasKit.Paint();
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
 };
 
-export class Span {
-  letterBaseline: number = 0;
-  letterHeight: number = 0;
-  lettersBounding: LetterRect[] = [];
-}
-
-export class TextSpan extends Span {
-  constructor(readonly text: string, readonly style: TextStyle) {
-    super();
-  }
-
-  toBackgroundFillStyle(): string {
-    if (this.style.backgroundColor) {
-      return this.colorToHex(this.style.backgroundColor as Float32Array);
-    } else {
-      return "#000000";
-    }
-  }
-
-  toTextFillStyle(): string {
-    if (this.style.color) {
-      return this.colorToHex(this.style.color as Float32Array);
-    } else {
-      return "#000000";
-    }
-  }
-
-  toDecorationStrokeStyle(): string {
-    if (this.style.decorationColor) {
-      return this.colorToHex(this.style.decorationColor as Float32Array);
-    } else {
-      return "#000000";
-    }
-  }
-
-  toCanvasFont(): string {
-    let font = `${this.style.fontSize}px system-ui, Roboto`;
-    const fontWeight = this.style.fontStyle?.weight?.value;
-    if (fontWeight && fontWeight !== 400) {
-      if (fontWeight >= 900) {
-        font = "900 " + font;
-      } else {
-        font = fontWeight.toFixed(0) + " " + font;
-      }
-    }
-    const slant = this.style.fontStyle?.slant?.value;
-    if (slant) {
-      switch (slant) {
-        case FontSlant.Italic:
-          font = "italic " + font;
-          break;
-        case FontSlant.Oblique:
-          font = "oblique " + font;
-          break;
-      }
-    }
-    return font;
-  }
-
-  colorToHex(rgbaColor: Float32Array): string {
-    const r = Math.round(rgbaColor[0] * 255).toString(16);
-    const g = Math.round(rgbaColor[1] * 255).toString(16);
-    const b = Math.round(rgbaColor[2] * 255).toString(16);
-    const a = Math.round(rgbaColor[3] * 255).toString(16);
-    const padHex = (hex: string) => (hex.length === 1 ? "0" + hex : hex);
-    const hexColor = "#" + padHex(r) + padHex(g) + padHex(b) + padHex(a);
-    return hexColor;
-  }
-}
-
-export class NewlineSpan extends TextSpan {
-  constructor() {
-    super("\n", {});
-  }
-}
-
-export class Paragraph extends EmbindObject {
+export class Paragraph extends SkEmbindObject {
   constructor(readonly spans: Span[], readonly paragraphStyle: ParagraphStyle) {
     super();
   }
 
-  isMiniTex = true;
-
-  _textLayout = new TextLayout(this);
-
-  _didExceedMaxLines = false;
+  public _type = "SkParagraph";
+  public isMiniTex = true;
+  private _textLayout = new TextLayout(this);
 
   didExceedMaxLines(): boolean {
-    return this._didExceedMaxLines;
+    return this._textLayout.didExceedMaxLines;
   }
 
   getAlphabeticBaseline(): number {
@@ -152,9 +70,7 @@ export class Paragraph extends EmbindObject {
    * with the top left corner as the origin, and +y direction as down.
    */
   getGlyphPositionAtCoordinate(dx: number, dy: number): PositionWithAffinity {
-    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-      this._textLayout.layout(-1, true);
-    }
+    this._textLayout.measureGlyphIfNeeded();
     for (let index = 0; index < this._textLayout.glyphInfos.length; index++) {
       const glyphInfo = this._textLayout.glyphInfos[index];
       const left = glyphInfo.graphemeLayoutBounds[0];
@@ -165,9 +81,9 @@ export class Paragraph extends EmbindObject {
         return { pos: index, affinity: { value: Affinity.Downstream } };
       }
     }
-    for (let index = 0; index < this._lineMetrics.length; index++) {
-      const lineMetrics = this._lineMetrics[index];
-      const isLastLine = index === this._lineMetrics.length - 1;
+    for (let index = 0; index < this._textLayout.lineMetrics.length; index++) {
+      const lineMetrics = this._textLayout.lineMetrics[index];
+      const isLastLine = index === this._textLayout.lineMetrics.length - 1;
       const left = 0;
       const top = lineMetrics.yOffset;
       const width = lineMetrics.width;
@@ -210,9 +126,7 @@ export class Paragraph extends EmbindObject {
    * visible codepoint.
    */
   getGlyphInfoAt(index: number): GlyphInfo | null {
-    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-      this._textLayout.layout(-1, true);
-    }
+    this._textLayout.measureGlyphIfNeeded();
     return this._textLayout.glyphInfos[index] ?? null;
   }
 
@@ -242,10 +156,8 @@ export class Paragraph extends EmbindObject {
     return this.getLineMetricsOfRange(index, index)[0]?.lineNumber ?? 0;
   }
 
-  _lineMetrics: LineMetrics[] = [];
-
   getLineMetrics(): LineMetrics[] {
-    return this._lineMetrics;
+    return this._textLayout.lineMetrics;
   }
 
   /**
@@ -254,12 +166,12 @@ export class Paragraph extends EmbindObject {
    * specified max line number.
    */
   getLineMetricsAt(lineNumber: number): LineMetrics | null {
-    return this._lineMetrics[lineNumber] ?? null;
+    return this._textLayout.lineMetrics[lineNumber] ?? null;
   }
 
   getLineMetricsOfRange(start: number, end: number): LineMetrics[] {
     let lineMetrics: LineMetrics[] = [];
-    this._lineMetrics.forEach((it) => {
+    this._textLayout.lineMetrics.forEach((it) => {
       const range0 = [start, end];
       const range1 = [it.startIndex, it.endIndex];
       const hasIntersection = range0[1] >= range1[0] && range1[1] >= range0[0];
@@ -308,7 +220,7 @@ export class Paragraph extends EmbindObject {
    * Returns the total number of visible lines in the paragraph.
    */
   getNumberOfLines(): number {
-    return this._lineMetrics.length;
+    return this._textLayout.lineMetrics.length;
   }
 
   getRectsForPlaceholders(): RectWithDirection[] {
@@ -328,11 +240,9 @@ export class Paragraph extends EmbindObject {
     hStyle: SkEnum<RectHeightStyle>,
     wStyle: SkEnum<RectWidthStyle>
   ): RectWithDirection[] {
-    if (Object.keys(this._textLayout.glyphInfos).length <= 0) {
-      this._textLayout.layout(-1, true);
-    }
+    this._textLayout.measureGlyphIfNeeded();
     let result: RectWithDirection[] = [];
-    this._lineMetrics.forEach((it) => {
+    this._textLayout.lineMetrics.forEach((it) => {
       const range0 = [start, end];
       const range1 = [it.startIndex, it.endIndex];
       const hasIntersection = range0[1] > range1[0] && range1[1] > range0[0];
@@ -379,7 +289,8 @@ export class Paragraph extends EmbindObject {
     });
     if (result.length === 0) {
       const lastSpan = this.spans[this.spans.length - 1];
-      const lastLine = this._lineMetrics[this._lineMetrics.length - 1];
+      const lastLine =
+        this._textLayout.lineMetrics[this._textLayout.lineMetrics.length - 1];
       if (
         end > lastLine.endIndex &&
         lastSpan instanceof TextSpan &&
@@ -430,26 +341,5 @@ export class Paragraph extends EmbindObject {
    */
   unresolvedCodepoints(): number[] {
     return [];
-  }
-
-  spansWithNewline(): Span[] {
-    let result: Span[] = [];
-    this.spans.forEach((span) => {
-      if (span instanceof TextSpan) {
-        if (span.text.indexOf("\n") >= 0) {
-          const components = span.text.split("\n");
-          for (let index = 0; index < components.length; index++) {
-            const component = components[index];
-            if (index > 0) {
-              result.push(new NewlineSpan());
-            }
-            result.push(new TextSpan(component, span.style));
-          }
-          return;
-        }
-      }
-      result.push(span);
-    });
-    return result;
   }
 }

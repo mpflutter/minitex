@@ -1,18 +1,21 @@
-import { FontStyle, TextStyle } from "./text_style";
-
-export class EmbindObject {
+export class SkEmbindObject {
   _type = "";
+  _deleted = false;
 
-  delete(): void {}
+  delete(): void {
+    this._deleted = true;
+  }
 
-  deleteLater(): void {}
+  deleteLater(): void {
+    this._deleted = true;
+  }
 
   isAliasOf(other: any): boolean {
-    return false;
+    return other._type === this._type;
   }
 
   isDeleted(): boolean {
-    return false;
+    return this._deleted;
   }
 }
 
@@ -37,11 +40,6 @@ export enum PlaceholderAlignment {
   Middle = "Middle",
 }
 
-export enum TextBaseline {
-  Alphabetic = "Alphabetic",
-  Ideographic = "Ideographic",
-}
-
 export enum StrokeCap {
   Butt = "Butt",
   Round = "Round",
@@ -54,9 +52,14 @@ export enum StrokeJoin {
   Round = "Round",
 }
 
+export enum TextBaseline {
+  Alphabetic,
+  Ideographic,
+}
+
 export enum TextDirection {
-  RTL = 0,
-  LTR = 1,
+  RTL,
+  LTR,
 }
 
 export enum RectHeightStyle {
@@ -174,13 +177,6 @@ export interface GlyphRun {
 }
 
 export interface Typeface {
-  /**
-   * Retrieves the glyph ids for each code point in the provided string. Note that glyph IDs
-   * are typeface-dependent; different faces may have different ids for the same code point.
-   * @param str
-   * @param numCodePoints - the number of code points in the string. Defaults to str.length.
-   * @param output - if provided, the results will be copied into this array.
-   */
   getGlyphIDs(
     str: string,
     numCodePoints?: number,
@@ -194,11 +190,11 @@ export interface PositionWithAffinity {
 }
 
 export interface ParagraphStyle {
-  // disableHinting?: boolean;
+  disableHinting?: boolean;
   ellipsis?: string;
   heightMultiplier?: number;
   maxLines?: number;
-  // replaceTabCharacters?: boolean;
+  replaceTabCharacters?: boolean;
   strutStyle?: StrutStyle;
   textAlign?: SkEnum<TextAlign>;
   textDirection?: SkEnum<TextDirection>;
@@ -236,9 +232,89 @@ export interface LetterRect {
 
 export interface TextShadow {
   color?: InputColor;
-  /**
-   * 2d array for x and y offset. Defaults to [0, 0]
-   */
   offset?: number[];
   blurRadius?: number;
+}
+
+export const NoDecoration = 0;
+export const UnderlineDecoration = 1;
+export const OverlineDecoration = 2;
+export const LineThroughDecoration = 4;
+
+export interface TextStyle {
+  backgroundColor?: InputColor;
+  color?: InputColor;
+  decoration?: number;
+  decorationColor?: InputColor;
+  decorationThickness?: number;
+  decorationStyle?: SkEnum<DecorationStyle>;
+  fontFamilies?: string[];
+  fontFeatures?: TextFontFeatures[];
+  fontSize?: number;
+  fontStyle?: FontStyle;
+  fontVariations?: TextFontVariations[];
+  foregroundColor?: InputColor;
+  heightMultiplier?: number;
+  halfLeading?: boolean;
+  letterSpacing?: number;
+  locale?: string;
+  shadows?: TextShadow[];
+  textBaseline?: SkEnum<TextBaseline>;
+  wordSpacing?: number;
+}
+
+export interface FontStyle {
+  weight?: SkEnum<FontWeight>;
+  width?: SkEnum<FontWidth>;
+  slant?: SkEnum<FontSlant>;
+}
+
+export enum FontWeight {
+  Invisible = 0,
+  Thin = 100,
+  ExtraLight = 200,
+  Light = 300,
+  Normal = 400,
+  Medium = 500,
+  SemiBold = 600,
+  Bold = 700,
+  ExtraBold = 800,
+  Black = 900,
+  ExtraBlack = 1000,
+}
+
+export enum FontWidth {
+  UltraCondensed,
+  ExtraCondensed,
+  Condensed,
+  SemiCondensed,
+  Normal,
+  SemiExpanded,
+  Expanded,
+  ExtraExpanded,
+  UltraExpanded,
+}
+
+export enum FontSlant {
+  Upright,
+  Italic,
+  Oblique,
+}
+
+export enum DecorationStyle {
+  Solid,
+  Double,
+  Dotted,
+  Dashed,
+  Wavy,
+}
+
+export interface TextFontFeatures {
+  name: string;
+  value: number;
+}
+
+export interface TextFontVariations {
+  axis: string;
+  value: number;
 }

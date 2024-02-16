@@ -1,13 +1,15 @@
 declare var wx: any;
-import { TextSpan, type Paragraph, NewlineSpan } from "./paragraph";
+import { type Paragraph } from "../adapter/paragraph";
+import { GlyphInfo, LineMetrics, TextDirection } from "../adapter/skia";
+import { FontSlant } from "../adapter/skia";
+import { logger } from "../logger";
 import {
-  GlyphInfo,
-  LetterRect,
-  LineMetrics,
-  Rect,
-  TextDirection,
-} from "./skia";
-import { FontSlant } from "./text_style";
+  isEnglishWord,
+  isPunctuation,
+  isSquareCharacter,
+  valueOfRectXYWH,
+} from "../util";
+import { NewlineSpan, TextSpan, spanWithNewline } from "./span";
 
 interface LetterMeasureResult {
   useCount: number;
@@ -112,6 +114,8 @@ export class TextLayout {
   constructor(readonly paragraph: Paragraph) {}
 
   glyphInfos: GlyphInfo[] = [];
+  lineMetrics: LineMetrics[] = [];
+  didExceedMaxLines: boolean = false;
 
   private previousLayoutWidth: number = 0;
 
@@ -126,6 +130,12 @@ export class TextLayout {
         TextLayout.sharedLayoutCanvas!.getContext(
           "2d"
         ) as CanvasRenderingContext2D;
+    }
+  }
+
+  measureGlyphIfNeeded() {
+    if (Object.keys(this.glyphInfos).length <= 0) {
+      this.layout(-1, true);
     }
   }
 
@@ -157,27 +167,8 @@ export class TextLayout {
       lineNumber: 0,
     };
     let lineMetrics: LineMetrics[] = [];
-    const spans = this.paragraph.spansWithNewline();
+    const spans = spanWithNewline(this.paragraph.spans);
     spans.forEach((span) => {
-      // if (span instanceof NewlineSpan) {
-      //   const newLineMatrics: LineMetrics =
-      //     this.createNewLine(currentLineMetrics);
-      //   lineMetrics.push(currentLineMetrics);
-      //   currentLineMetrics = newLineMatrics;
-      //   const matrics = TextLayout.sharedLayoutContext.measureText("M");
-      //   if (!matrics.fontBoundingBoxAscent) {
-      //     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
-      //     currentLineMetrics.ascent = mHeight * 1.15;
-      //     currentLineMetrics.descent = mHeight * 0.35;
-      //   } else {
-      //     currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
-      //     currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
-      //   }
-      //   currentLineMetrics.height = Math.max(
-      //     currentLineMetrics.height,
-      //     currentLineMetrics.ascent + currentLineMetrics.descent
-      //   );
-      // }
       if (span instanceof TextSpan) {
         TextLayout.sharedLayoutContext.font = span.toCanvasFont();
         const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
@@ -294,12 +285,12 @@ export class TextLayout {
             })();
             const currentGlyphHeight = currentLineMetrics.height;
             const currentGlyphInfo: GlyphInfo = {
-              graphemeLayoutBounds: new Float32Array([
+              graphemeLayoutBounds: valueOfRectXYWH(
                 currentGlyphLeft,
                 currentGlyphTop,
-                currentGlyphLeft + currentGlyphWidth,
-                currentGlyphTop + currentGlyphHeight,
-              ]),
+                currentGlyphWidth,
+                currentGlyphHeight
+              ),
               graphemeClusterTextRange: { start: index, end: index + 1 },
               dir: { value: TextDirection.LTR },
               isEllipsis: false,
@@ -347,16 +338,16 @@ export class TextLayout {
       this.paragraph.paragraphStyle.maxLines &&
       lineMetrics.length > this.paragraph.paragraphStyle.maxLines
     ) {
-      this.paragraph._didExceedMaxLines = true;
+      this.didExceedMaxLines = true;
       lineMetrics = lineMetrics.slice(
         0,
         this.paragraph.paragraphStyle.maxLines
       );
     } else {
-      this.paragraph._didExceedMaxLines = false;
+      this.didExceedMaxLines = false;
     }
-    // console.log("lineMetricslineMetrics", lineMetrics);
-    this.paragraph._lineMetrics = lineMetrics;
+    logger.debug("TextLayout.layout.lineMetrics", lineMetrics);
+    this.lineMetrics = lineMetrics;
   }
 
   private createNewLine(currentLineMetrics: LineMetrics): LineMetrics {
@@ -383,66 +374,4 @@ export class TextLayout {
       lineNumber: currentLineMetrics.lineNumber + 1,
     };
   }
-}
-
-export function isEnglishWord(str: string) {
-  const englishRegex = /^[A-Za-z]+$/;
-  const result = englishRegex.test(str);
-  return result;
-}
-
-export function isSquareCharacter(str: string) {
-  const squareCharacterRange = /[\u4e00-\u9fa5]/;
-  return squareCharacterRange.test(str);
-}
-
-const mapOfPunctuation: Record<string, number> = {
-  "！": 1,
-  "？": 1,
-  "｡": 1,
-  "，": 1,
-  "、": 1,
-  "“": 1,
-  "”": 1,
-  "‘": 1,
-  "’": 1,
-  "；": 1,
-  "：": 1,
-  "【": 1,
-  "】": 1,
-  "『": 1,
-  "』": 1,
-  "（": 1,
-  "）": 1,
-  "《": 1,
-  "》": 1,
-  "〈": 1,
-  "〉": 1,
-  "〔": 1,
-  "〕": 1,
-  "［": 1,
-  "］": 1,
-  "｛": 1,
-  "｝": 1,
-  "〖": 1,
-  "〗": 1,
-  "〘": 1,
-  "〙": 1,
-  "〚": 1,
-  "〛": 1,
-  "〝": 1,
-  "〞": 1,
-  "〟": 1,
-  "﹏": 1,
-  "…": 1,
-  "—": 1,
-  "～": 1,
-  "·": 1,
-  "•": 1,
-  ",": 1,
-  ".": 1,
-};
-
-export function isPunctuation(char: string) {
-  return mapOfPunctuation[char] === 1;
 }

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MiniTex = void 0;
-const drawer_1 = require("./drawer");
-const paragraph_1 = require("./paragraph");
-const paragraph_builder_1 = require("./paragraph_builder");
+const drawer_1 = require("./impl/drawer");
+const paragraph_1 = require("./adapter/paragraph");
+const paragraph_builder_1 = require("./adapter/paragraph_builder");
 class MiniTex {
     static install(canvasKit, pixelRatio) {
         drawer_1.Drawer.pixelRatio = pixelRatio;

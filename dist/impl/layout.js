@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.TextLayout = void 0;
-const paragraph_1 = require("./paragraph");
-const skia_1 = require("./skia");
-const skia_2 = require("./skia");
+exports.TextLayout = void 0;
+const skia_1 = require("../adapter/skia");
+const skia_2 = require("../adapter/skia");
+const logger_1 = require("../logger");
+const util_1 = require("../util");
+const span_1 = require("./span");
 class LetterMeasurer {
     static measureLetters(span, context) {
         let result = [0];
@@ -11,7 +13,7 @@ class LetterMeasurer {
         for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
             const wordWidth = (() => {
-                if (isSquareCharacter(letter)) {
+                if ((0, util_1.isSquareCharacter)(letter)) {
                     return this.measureSquareCharacter(context);
                 }
                 else {
@@ -76,6 +78,8 @@ class TextLayout {
     constructor(paragraph) {
         this.paragraph = paragraph;
         this.glyphInfos = [];
+        this.lineMetrics = [];
+        this.didExceedMaxLines = false;
         this.previousLayoutWidth = 0;
     }
     initCanvas() {
@@ -87,6 +91,11 @@ class TextLayout {
             });
             TextLayout.sharedLayoutContext =
                 TextLayout.sharedLayoutCanvas.getContext("2d");
+        }
+    }
+    measureGlyphIfNeeded() {
+        if (Object.keys(this.glyphInfos).length <= 0) {
+            this.layout(-1, true);
         }
     }
     layout(layoutWidth, forceCalcGlyphInfos = false) {
@@ -116,29 +125,10 @@ class TextLayout {
             lineNumber: 0,
         };
         let lineMetrics = [];
-        const spans = this.paragraph.spansWithNewline();
+        const spans = (0, span_1.spanWithNewline)(this.paragraph.spans);
         spans.forEach((span) => {
             var _a, _b, _c;
-            // if (span instanceof NewlineSpan) {
-            //   const newLineMatrics: LineMetrics =
-            //     this.createNewLine(currentLineMetrics);
-            //   lineMetrics.push(currentLineMetrics);
-            //   currentLineMetrics = newLineMatrics;
-            //   const matrics = TextLayout.sharedLayoutContext.measureText("M");
-            //   if (!matrics.fontBoundingBoxAscent) {
-            //     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
-            //     currentLineMetrics.ascent = mHeight * 1.15;
-            //     currentLineMetrics.descent = mHeight * 0.35;
-            //   } else {
-            //     currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
-            //     currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
-            //   }
-            //   currentLineMetrics.height = Math.max(
-            //     currentLineMetrics.height,
-            //     currentLineMetrics.ascent + currentLineMetrics.descent
-            //   );
-            // }
-            if (span instanceof paragraph_1.TextSpan) {
+            if (span instanceof span_1.TextSpan) {
                 TextLayout.sharedLayoutContext.font = span.toCanvasFont();
                 const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
                 if (!matrics.fontBoundingBoxAscent) {
@@ -162,7 +152,7 @@ class TextLayout {
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (currentLineMetrics.width + matrics.width < layoutWidth &&
                     !forceCalcGlyphInfos) {
-                    if (span instanceof paragraph_1.NewlineSpan) {
+                    if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
                         lineMetrics.push(currentLineMetrics);
                         currentLineMetrics = newLineMatrics;
@@ -180,7 +170,7 @@ class TextLayout {
                         ? [...matrics.advances]
                         : LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
                     advances.push(matrics.width);
-                    if (span instanceof paragraph_1.NewlineSpan) {
+                    if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
                     }
                     let currentWord = "";
@@ -210,14 +200,14 @@ class TextLayout {
                         currentWordLength += 1;
                         canBreak = true;
                         forceBreak = false;
-                        if (isEnglishWord(nextWord)) {
+                        if ((0, util_1.isEnglishWord)(nextWord)) {
                             canBreak = false;
                         }
-                        if (isPunctuation(nextWord[nextWord.length - 1]) &&
+                        if ((0, util_1.isPunctuation)(nextWord[nextWord.length - 1]) &&
                             currentLineMetrics.width + nextWordWidth >= layoutWidth) {
                             forceBreak = true;
                         }
-                        if (span instanceof paragraph_1.NewlineSpan) {
+                        if (span instanceof span_1.NewlineSpan) {
                             forceBreak = true;
                         }
                         const currentGlyphLeft = currentLineMetrics.width + currentLetterLeft;
@@ -232,12 +222,7 @@ class TextLayout {
                         })();
                         const currentGlyphHeight = currentLineMetrics.height;
                         const currentGlyphInfo = {
-                            graphemeLayoutBounds: new Float32Array([
-                                currentGlyphLeft,
-                                currentGlyphTop,
-                                currentGlyphLeft + currentGlyphWidth,
-                                currentGlyphTop + currentGlyphHeight,
-                            ]),
+                            graphemeLayoutBounds: (0, util_1.valueOfRectXYWH)(currentGlyphLeft, currentGlyphTop, currentGlyphWidth, currentGlyphHeight),
                             graphemeClusterTextRange: { start: index, end: index + 1 },
                             dir: { value: skia_1.TextDirection.LTR },
                             isEllipsis: false,
@@ -278,14 +263,14 @@ class TextLayout {
         lineMetrics.push(currentLineMetrics);
         if (this.paragraph.paragraphStyle.maxLines &&
             lineMetrics.length > this.paragraph.paragraphStyle.maxLines) {
-            this.paragraph._didExceedMaxLines = true;
+            this.didExceedMaxLines = true;
             lineMetrics = lineMetrics.slice(0, this.paragraph.paragraphStyle.maxLines);
         }
         else {
-            this.paragraph._didExceedMaxLines = false;
+            this.didExceedMaxLines = false;
         }
-        // console.log("lineMetricslineMetrics", lineMetrics);
-        this.paragraph._lineMetrics = lineMetrics;
+        logger_1.logger.debug("TextLayout.layout.lineMetrics", lineMetrics);
+        this.lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
         var _a;
@@ -310,64 +295,3 @@ class TextLayout {
     }
 }
 exports.TextLayout = TextLayout;
-function isEnglishWord(str) {
-    const englishRegex = /^[A-Za-z]+$/;
-    const result = englishRegex.test(str);
-    return result;
-}
-exports.isEnglishWord = isEnglishWord;
-function isSquareCharacter(str) {
-    const squareCharacterRange = /[\u4e00-\u9fa5]/;
-    return squareCharacterRange.test(str);
-}
-exports.isSquareCharacter = isSquareCharacter;
-const mapOfPunctuation = {
-    "！": 1,
-    "？": 1,
-    "｡": 1,
-    "，": 1,
-    "、": 1,
-    "“": 1,
-    "”": 1,
-    "‘": 1,
-    "’": 1,
-    "；": 1,
-    "：": 1,
-    "【": 1,
-    "】": 1,
-    "『": 1,
-    "』": 1,
-    "（": 1,
-    "）": 1,
-    "《": 1,
-    "》": 1,
-    "〈": 1,
-    "〉": 1,
-    "〔": 1,
-    "〕": 1,
-    "［": 1,
-    "］": 1,
-    "｛": 1,
-    "｝": 1,
-    "〖": 1,
-    "〗": 1,
-    "〘": 1,
-    "〙": 1,
-    "〚": 1,
-    "〛": 1,
-    "〝": 1,
-    "〞": 1,
-    "〟": 1,
-    "﹏": 1,
-    "…": 1,
-    "—": 1,
-    "～": 1,
-    "·": 1,
-    "•": 1,
-    ",": 1,
-    ".": 1,
-};
-function isPunctuation(char) {
-    return mapOfPunctuation[char] === 1;
-}
-exports.isPunctuation = isPunctuation;
