@@ -16,9 +16,6 @@ class Logger {
     setLogLevel(logLevel = LogLevel.DEBUG) {
         this.logLevel = logLevel;
     }
-    setProfileMode() {
-        this.profileMode = true;
-    }
     log(level, ...args) {
         if (level >= this.logLevel) {
             const message = args.length === 1 ? args[0] : args;
@@ -38,7 +35,9 @@ class Logger {
         this.log(LogLevel.ERROR, ...args);
     }
     profile(...args) {
-        console.info("[PROFILE]", ...args);
+        if (this.profileMode) {
+            console.info("[PROFILE]", ...args);
+        }
     }
 }
 exports.Logger = Logger;

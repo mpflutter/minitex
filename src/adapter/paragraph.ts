@@ -1,6 +1,7 @@
 import { Drawer } from "../impl/drawer";
 import { TextLayout } from "../impl/layout";
 import { Span, TextSpan } from "../impl/span";
+import { logger } from "../logger";
 import {
   Affinity,
   SkEmbindObject,
@@ -24,6 +25,10 @@ export const drawParagraph = function (
   dx: number,
   dy: number
 ) {
+  let drawStartTime!: number;
+  if (logger.profileMode) {
+    drawStartTime = new Date().getTime();
+  }
   const drawer = new Drawer(paragraph);
   const imageData = drawer.draw();
   const canvasImg = CanvasKit.MakeImage(
@@ -46,6 +51,10 @@ export const drawParagraph = function (
   );
   const skPaint = new CanvasKit.Paint();
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
+  if (logger.profileMode) {
+    const drawCostTime = new Date().getTime() - drawStartTime;
+    logger.profile("drawParagraph cost", drawCostTime);
+  }
 };
 
 export class Paragraph extends SkEmbindObject {

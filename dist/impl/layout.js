@@ -100,6 +100,10 @@ class TextLayout {
     }
     layout(layoutWidth, forceCalcGlyphInfos = false) {
         var _a;
+        let layoutStartTime;
+        if (logger_1.logger.profileMode) {
+            layoutStartTime = new Date().getTime();
+        }
         if (layoutWidth < 0) {
             layoutWidth = this.previousLayoutWidth;
         }
@@ -270,6 +274,10 @@ class TextLayout {
             this.didExceedMaxLines = false;
         }
         logger_1.logger.debug("TextLayout.layout.lineMetrics", lineMetrics);
+        if (logger_1.logger.profileMode) {
+            const layoutCostTime = new Date().getTime() - layoutStartTime;
+            logger_1.logger.profile("Layout cost", layoutCostTime);
+        }
         this.lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {

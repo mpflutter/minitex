@@ -4,8 +4,13 @@ exports.Paragraph = exports.drawParagraph = void 0;
 const drawer_1 = require("../impl/drawer");
 const layout_1 = require("../impl/layout");
 const span_1 = require("../impl/span");
+const logger_1 = require("../logger");
 const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
+    let drawStartTime;
+    if (logger_1.logger.profileMode) {
+        drawStartTime = new Date().getTime();
+    }
     const drawer = new drawer_1.Drawer(paragraph);
     const imageData = drawer.draw();
     const canvasImg = CanvasKit.MakeImage({
@@ -19,6 +24,10 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
     const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
     const skPaint = new CanvasKit.Paint();
     skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
+    if (logger_1.logger.profileMode) {
+        const drawCostTime = new Date().getTime() - drawStartTime;
+        logger_1.logger.profile("drawParagraph cost", drawCostTime);
+    }
 };
 exports.drawParagraph = drawParagraph;
 class Paragraph extends skia_1.SkEmbindObject {

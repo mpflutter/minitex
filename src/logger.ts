@@ -7,7 +7,7 @@ export enum LogLevel {
 
 export class Logger {
   private logLevel: LogLevel;
-  private profileMode = false;
+  public profileMode = false;
 
   constructor(logLevel: LogLevel = LogLevel.ERROR) {
     this.logLevel = logLevel;
@@ -15,10 +15,6 @@ export class Logger {
 
   setLogLevel(logLevel: LogLevel = LogLevel.DEBUG) {
     this.logLevel = logLevel;
-  }
-
-  setProfileMode() {
-    this.profileMode = true;
   }
 
   private log(level: LogLevel, ...args: any[]): void {
@@ -45,7 +41,9 @@ export class Logger {
   }
 
   public profile(...args: any[]): void {
-    console.info("[PROFILE]", ...args);
+    if (this.profileMode) {
+      console.info("[PROFILE]", ...args);
+    }
   }
 }
 
