@@ -1,4 +1,7 @@
 "use strict";
+// Copyright 2023 The MPFlutter Authors. All rights reserved.
+// Use of this source code is governed by a Apache License Version 2.0 that can be
+// found in the LICENSE file.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drawer = void 0;
 const skia_1 = require("../adapter/skia");
