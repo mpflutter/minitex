@@ -1,7 +1,11 @@
+// Copyright 2023 The MPFlutter Authors. All rights reserved.
+// Use of this source code is governed by a Apache License Version 2.0 that can be
+// found in the LICENSE file.
+
 import { Drawer } from "./impl/drawer";
 import { drawParagraph } from "./adapter/paragraph";
 import { ParagraphBuilder } from "./adapter/paragraph_builder";
-import { logger } from "./logger";
+// import { logger } from "./logger";
 
 export class MiniTex {
   static install(canvasKit: any, pixelRatio: number) {
