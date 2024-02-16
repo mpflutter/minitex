@@ -15,6 +15,7 @@ import { NewlineSpan, TextSpan, spanWithNewline } from "./span";
 import {
   colorToHex,
   convertToUpwardToPixelRatio,
+  createCanvas,
   isSquareCharacter,
 } from "../util";
 import { logger } from "../logger";
@@ -28,11 +29,10 @@ export class Drawer {
 
   private initCanvas() {
     if (!Drawer.sharedRenderCanvas) {
-      Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
-        type: "2d",
-        width: Math.min(4000, 1000 * Drawer.pixelRatio),
-        height: Math.min(4000, 1000 * Drawer.pixelRatio),
-      });
+      Drawer.sharedRenderCanvas = createCanvas(
+        Math.min(4000, 1000 * Drawer.pixelRatio),
+        Math.min(4000, 1000 * Drawer.pixelRatio)
+      );
       Drawer.sharedRenderContext = Drawer.sharedRenderCanvas!.getContext(
         "2d"
       ) as CanvasRenderingContext2D;

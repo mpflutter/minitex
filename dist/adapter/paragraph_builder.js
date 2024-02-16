@@ -129,6 +129,11 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
                 text += it.text;
             }
         });
+        if (typeof window === "object" && window.TextEncoder) {
+            const encoder = new window.TextEncoder();
+            const view = encoder.encode(text);
+            return String.fromCharCode(...Array.from(view));
+        }
         return text;
     }
     /**

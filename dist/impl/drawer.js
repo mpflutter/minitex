@@ -15,11 +15,7 @@ class Drawer {
     }
     initCanvas() {
         if (!Drawer.sharedRenderCanvas) {
-            Drawer.sharedRenderCanvas = wx.createOffscreenCanvas({
-                type: "2d",
-                width: Math.min(4000, 1000 * Drawer.pixelRatio),
-                height: Math.min(4000, 1000 * Drawer.pixelRatio),
-            });
+            Drawer.sharedRenderCanvas = (0, util_1.createCanvas)(Math.min(4000, 1000 * Drawer.pixelRatio), Math.min(4000, 1000 * Drawer.pixelRatio));
             Drawer.sharedRenderContext = Drawer.sharedRenderCanvas.getContext("2d");
         }
     }

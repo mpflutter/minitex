@@ -2,6 +2,9 @@
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 
+declare var wx: any;
+declare var window: any;
+
 export const colorToHex = (rgbaColor: Float32Array): string => {
   const r = Math.round(rgbaColor[0] * 255).toString(16);
   const g = Math.round(rgbaColor[1] * 255).toString(16);
@@ -99,4 +102,21 @@ export function convertToUpwardToPixelRatio(
   const upwardInt = Math.ceil(number);
   const remainder = upwardInt % pixelRatio;
   return remainder === 0 ? upwardInt : upwardInt + (pixelRatio - remainder);
+}
+
+export function createCanvas(width: number, height: number): HTMLCanvasElement {
+  if (typeof wx === "object") {
+    return wx.createOffscreenCanvas({
+      type: "2d",
+      width: width,
+      height: height,
+    });
+  } else if (typeof window === "object") {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  } else {
+    throw "can not create canvas";
+  }
 }

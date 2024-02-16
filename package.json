@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "build:web": "tsc && browserify dist/index.js --standalone MiniTex > minitex.js && terser --compress -- minitex.js > minitex.min.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "browserify": "^17.0.0",
+    "terser": "^5.27.1",
     "typescript": "^5.3.3"
   }
 }

@@ -87,11 +87,7 @@ class TextLayout {
     }
     initCanvas() {
         if (!TextLayout.sharedLayoutCanvas) {
-            TextLayout.sharedLayoutCanvas = wx.createOffscreenCanvas({
-                type: "2d",
-                width: 1,
-                height: 1,
-            });
+            TextLayout.sharedLayoutCanvas = (0, util_1.createCanvas)(1, 1);
             TextLayout.sharedLayoutContext =
                 TextLayout.sharedLayoutCanvas.getContext("2d");
         }

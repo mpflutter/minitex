@@ -8,6 +8,7 @@ import { GlyphInfo, LineMetrics, TextDirection } from "../adapter/skia";
 import { FontSlant } from "../adapter/skia";
 import { logger } from "../logger";
 import {
+  createCanvas,
   isEnglishWord,
   isPunctuation,
   isSquareCharacter,
@@ -125,11 +126,7 @@ export class TextLayout {
 
   private initCanvas() {
     if (!TextLayout.sharedLayoutCanvas) {
-      TextLayout.sharedLayoutCanvas = wx.createOffscreenCanvas({
-        type: "2d",
-        width: 1,
-        height: 1,
-      });
+      TextLayout.sharedLayoutCanvas = createCanvas(1, 1);
       TextLayout.sharedLayoutContext =
         TextLayout.sharedLayoutCanvas!.getContext(
           "2d"
