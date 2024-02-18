@@ -105,7 +105,7 @@ export function convertToUpwardToPixelRatio(
 }
 
 export function createCanvas(width: number, height: number): HTMLCanvasElement {
-  if (typeof wx === "object") {
+  if (typeof wx === "object" && typeof wx.createOffscreenCanvas === "function") {
     return wx.createOffscreenCanvas({
       type: "2d",
       width: width,
