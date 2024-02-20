@@ -10,23 +10,27 @@ const span_1 = require("../impl/span");
 const logger_1 = require("../logger");
 const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
-    var _a;
     let drawStartTime;
     if (logger_1.logger.profileMode) {
         drawStartTime = new Date().getTime();
     }
     const drawer = new drawer_1.Drawer(paragraph);
-    const imageData = (_a = paragraph.imageDataCache) !== null && _a !== void 0 ? _a : drawer.draw();
-    paragraph.imageDataCache = imageData;
-    const canvasImg = CanvasKit.MakeImage({
-        width: imageData.width,
-        height: imageData.height,
-        alphaType: CanvasKit.AlphaType.Unpremul,
-        colorType: CanvasKit.ColorType.RGBA_8888,
-        colorSpace: CanvasKit.ColorSpace.SRGB,
-    }, imageData.data, 4 * imageData.width);
-    const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
-    const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
+    let canvasImg = paragraph.skImageCache;
+    if (!canvasImg) {
+        const imageData = drawer.draw();
+        canvasImg = CanvasKit.MakeImage({
+            width: imageData.width,
+            height: imageData.height,
+            alphaType: CanvasKit.AlphaType.Unpremul,
+            colorType: CanvasKit.ColorType.RGBA_8888,
+            colorSpace: CanvasKit.ColorSpace.SRGB,
+        }, imageData.data, 4 * imageData.width);
+        paragraph.skImageCache = canvasImg;
+        paragraph.skImageWidth = imageData.width;
+        paragraph.skImageHeight = imageData.height;
+    }
+    const srcRect = CanvasKit.XYWHRect(0, 0, paragraph.skImageWidth, paragraph.skImageHeight);
+    const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), paragraph.skImageWidth / drawer_1.Drawer.pixelRatio, paragraph.skImageHeight / drawer_1.Drawer.pixelRatio);
     const skPaint = new CanvasKit.Paint();
     skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
     if (logger_1.logger.profileMode) {
@@ -43,6 +47,13 @@ class Paragraph extends skia_1.SkEmbindObject {
         this._type = "SkParagraph";
         this.isMiniTex = true;
         this._textLayout = new layout_1.TextLayout(this);
+    }
+    delete() {
+        if (this.skImageCache) {
+            this.skImageCache.delete();
+            this.skImageCache = undefined;
+        }
+        super.delete();
     }
     didExceedMaxLines() {
         return this._textLayout.didExceedMaxLines;
@@ -289,7 +300,10 @@ class Paragraph extends skia_1.SkEmbindObject {
      * @param width
      */
     layout(width) {
-        this.imageDataCache = undefined;
+        if (this.skImageCache) {
+            this.skImageCache.delete();
+        }
+        this.skImageCache = undefined;
         this._textLayout.layout(width);
     }
     /**

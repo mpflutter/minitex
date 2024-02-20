@@ -34,25 +34,35 @@ export const drawParagraph = function (
     drawStartTime = new Date().getTime();
   }
   const drawer = new Drawer(paragraph);
-  const imageData = paragraph.imageDataCache ?? drawer.draw();
-  paragraph.imageDataCache = imageData;
-  const canvasImg = CanvasKit.MakeImage(
-    {
-      width: imageData.width,
-      height: imageData.height,
-      alphaType: CanvasKit.AlphaType.Unpremul,
-      colorType: CanvasKit.ColorType.RGBA_8888,
-      colorSpace: CanvasKit.ColorSpace.SRGB,
-    },
-    imageData.data,
-    4 * imageData.width
+  let canvasImg = paragraph.skImageCache;
+  if (!canvasImg) {
+    const imageData = drawer.draw();
+    canvasImg = CanvasKit.MakeImage(
+      {
+        width: imageData.width,
+        height: imageData.height,
+        alphaType: CanvasKit.AlphaType.Unpremul,
+        colorType: CanvasKit.ColorType.RGBA_8888,
+        colorSpace: CanvasKit.ColorSpace.SRGB,
+      },
+      imageData.data,
+      4 * imageData.width
+    );
+    paragraph.skImageCache = canvasImg;
+    paragraph.skImageWidth = imageData.width;
+    paragraph.skImageHeight = imageData.height;
+  }
+  const srcRect = CanvasKit.XYWHRect(
+    0,
+    0,
+    paragraph.skImageWidth!,
+    paragraph.skImageHeight!
   );
-  const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
   const dstRect = CanvasKit.XYWHRect(
     Math.ceil(dx),
     Math.ceil(dy),
-    imageData.width / Drawer.pixelRatio,
-    imageData.height / Drawer.pixelRatio
+    paragraph.skImageWidth! / Drawer.pixelRatio,
+    paragraph.skImageHeight! / Drawer.pixelRatio
   );
   const skPaint = new CanvasKit.Paint();
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
@@ -67,9 +77,19 @@ export class Paragraph extends SkEmbindObject {
     super();
   }
 
+  delete(): void {
+    if (this.skImageCache) {
+      this.skImageCache.delete();
+      this.skImageCache = undefined;
+    }
+    super.delete();
+  }
+
   public _type = "SkParagraph";
   public isMiniTex = true;
-  public imageDataCache?: ImageData;
+  public skImageCache?: SkEmbindObject;
+  public skImageWidth?: number;
+  public skImageHeight?: number;
   private _textLayout = new TextLayout(this);
 
   didExceedMaxLines(): boolean {
@@ -347,7 +367,10 @@ export class Paragraph extends SkEmbindObject {
    * @param width
    */
   layout(width: number): void {
-    this.imageDataCache = undefined;
+    if (this.skImageCache) {
+      this.skImageCache.delete();
+    }
+    this.skImageCache = undefined;
     this._textLayout.layout(width);
   }
 

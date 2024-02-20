@@ -11,23 +11,27 @@ const span_1 = require("../impl/span");
 const logger_1 = require("../logger");
 const skia_1 = require("./skia");
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
-    var _a;
     let drawStartTime;
     if (logger_1.logger.profileMode) {
         drawStartTime = new Date().getTime();
     }
     const drawer = new drawer_1.Drawer(paragraph);
-    const imageData = (_a = paragraph.imageDataCache) !== null && _a !== void 0 ? _a : drawer.draw();
-    paragraph.imageDataCache = imageData;
-    const canvasImg = CanvasKit.MakeImage({
-        width: imageData.width,
-        height: imageData.height,
-        alphaType: CanvasKit.AlphaType.Unpremul,
-        colorType: CanvasKit.ColorType.RGBA_8888,
-        colorSpace: CanvasKit.ColorSpace.SRGB,
-    }, imageData.data, 4 * imageData.width);
-    const srcRect = CanvasKit.XYWHRect(0, 0, imageData.width, imageData.height);
-    const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), imageData.width / drawer_1.Drawer.pixelRatio, imageData.height / drawer_1.Drawer.pixelRatio);
+    let canvasImg = paragraph.skImageCache;
+    if (!canvasImg) {
+        const imageData = drawer.draw();
+        canvasImg = CanvasKit.MakeImage({
+            width: imageData.width,
+            height: imageData.height,
+            alphaType: CanvasKit.AlphaType.Unpremul,
+            colorType: CanvasKit.ColorType.RGBA_8888,
+            colorSpace: CanvasKit.ColorSpace.SRGB,
+        }, imageData.data, 4 * imageData.width);
+        paragraph.skImageCache = canvasImg;
+        paragraph.skImageWidth = imageData.width;
+        paragraph.skImageHeight = imageData.height;
+    }
+    const srcRect = CanvasKit.XYWHRect(0, 0, paragraph.skImageWidth, paragraph.skImageHeight);
+    const dstRect = CanvasKit.XYWHRect(Math.ceil(dx), Math.ceil(dy), paragraph.skImageWidth / drawer_1.Drawer.pixelRatio, paragraph.skImageHeight / drawer_1.Drawer.pixelRatio);
     const skPaint = new CanvasKit.Paint();
     skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
     if (logger_1.logger.profileMode) {
@@ -44,6 +48,13 @@ class Paragraph extends skia_1.SkEmbindObject {
         this._type = "SkParagraph";
         this.isMiniTex = true;
         this._textLayout = new layout_1.TextLayout(this);
+    }
+    delete() {
+        if (this.skImageCache) {
+            this.skImageCache.delete();
+            this.skImageCache = undefined;
+        }
+        super.delete();
     }
     didExceedMaxLines() {
         return this._textLayout.didExceedMaxLines;
@@ -290,7 +301,10 @@ class Paragraph extends skia_1.SkEmbindObject {
      * @param width
      */
     layout(width) {
-        this.imageDataCache = undefined;
+        if (this.skImageCache) {
+            this.skImageCache.delete();
+        }
+        this.skImageCache = undefined;
         this._textLayout.layout(width);
     }
     /**
@@ -694,7 +708,7 @@ class Drawer {
                             (_a = currentDrawText.substring(0, currentDrawText.length - trimLength) + this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "...";
                         didExceedMaxLines = true;
                     }
-                    const drawingLeft = (() => {
+                    let drawingLeft = (() => {
                         var _a, _b;
                         if (linesDrawingRightBounds[currentDrawLine.lineNumber] === undefined) {
                             const textAlign = (_a = this.paragraph.paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value;
@@ -722,7 +736,10 @@ class Drawer {
                             if (currentDrawText === "\n") {
                                 return 0;
                             }
-                            return context.measureText(currentDrawText).width;
+                            const extraLetterSpacing = span.hasLetterSpacing()
+                                ? currentDrawText.length * span.style.letterSpacing
+                                : 0;
+                            return (context.measureText(currentDrawText).width + extraLetterSpacing);
                         })();
                     linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
                     const textTop = currentDrawLine.baseline * currentDrawLine.heightMultiplier -
@@ -747,7 +764,18 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                    if (span.hasLetterSpacing()) {
+                        const letterSpacing = span.style.letterSpacing;
+                        for (let index = 0; index < currentDrawText.length; index++) {
+                            const currentDrawLetter = currentDrawText[index];
+                            context.fillText(currentDrawLetter, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                            const letterWidth = context.measureText(currentDrawLetter).width;
+                            drawingLeft += letterWidth + letterSpacing;
+                        }
+                    }
+                    else {
+                        context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                    }
                     context.restore();
                     logger_1.logger.debug("Drawer.draw.fillText", currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
                     this.drawDecoration(span, context, {
@@ -852,7 +880,7 @@ class LetterMeasurer {
         let curPosWidth = 0;
         for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
-            const wordWidth = (() => {
+            let wordWidth = (() => {
                 if ((0, util_1.isSquareCharacter)(letter)) {
                     return this.measureSquareCharacter(context);
                 }
@@ -860,6 +888,9 @@ class LetterMeasurer {
                     return this.measureNormalLetter(letter, context);
                 }
             })();
+            if (span.hasLetterSpacing()) {
+                wordWidth += span.style.letterSpacing;
+            }
             curPosWidth += wordWidth;
             result.push(curPosWidth);
         }
@@ -991,6 +1022,7 @@ class TextLayout {
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (currentLineMetrics.width + matrics.width < layoutWidth &&
+                    !span.hasLetterSpacing() &&
                     !forceCalcGlyphInfos) {
                     if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
@@ -1006,10 +1038,13 @@ class TextLayout {
                     }
                 }
                 else {
-                    let advances = matrics.advances
+                    let advances = matrics.advances && !span.hasLetterSpacing()
                         ? [...matrics.advances]
                         : LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
-                    advances.push(matrics.width);
+                    const letterSpacingWidth = span.hasLetterSpacing()
+                        ? span.style.letterSpacing * (span.text.length + 1)
+                        : 0;
+                    advances.push(matrics.width + letterSpacingWidth);
                     if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
                     }
@@ -1162,6 +1197,9 @@ class TextSpan extends Span {
         super();
         this.text = text;
         this.style = style;
+    }
+    hasLetterSpacing() {
+        return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
     }
     toBackgroundFillStyle() {
         if (this.style.backgroundColor) {
@@ -1416,7 +1454,7 @@ function convertToUpwardToPixelRatio(number, pixelRatio) {
 }
 exports.convertToUpwardToPixelRatio = convertToUpwardToPixelRatio;
 function createCanvas(width, height) {
-    if (typeof wx === "object") {
+    if (typeof wx === "object" && typeof wx.createOffscreenCanvas === "function") {
         return wx.createOffscreenCanvas({
             type: "2d",
             width: width,

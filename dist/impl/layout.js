@@ -23,8 +23,7 @@ class LetterMeasurer {
                     return this.measureNormalLetter(letter, context);
                 }
             })();
-            if (span.style.letterSpacing !== undefined &&
-                span.style.letterSpacing > 0) {
+            if (span.hasLetterSpacing()) {
                 wordWidth += span.style.letterSpacing;
             }
             curPosWidth += wordWidth;

@@ -141,7 +141,6 @@ class Drawer {
                         for (let index = 0; index < currentDrawText.length; index++) {
                             const currentDrawLetter = currentDrawText[index];
                             context.fillText(currentDrawLetter, drawingLeft, textBaseline + currentDrawLine.yOffset);
-                            console.log("fillText", currentDrawLetter);
                             const letterWidth = context.measureText(currentDrawLetter).width;
                             drawingLeft += letterWidth + letterSpacing;
                         }
