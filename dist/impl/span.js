@@ -20,6 +20,9 @@ class TextSpan extends Span {
         this.text = text;
         this.style = style;
     }
+    hasLetterSpacing() {
+        return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
+    }
     toBackgroundFillStyle() {
         if (this.style.backgroundColor) {
             return (0, util_1.colorToHex)(this.style.backgroundColor);

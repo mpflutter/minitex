@@ -15,7 +15,7 @@ class LetterMeasurer {
         let curPosWidth = 0;
         for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
-            const wordWidth = (() => {
+            let wordWidth = (() => {
                 if ((0, util_1.isSquareCharacter)(letter)) {
                     return this.measureSquareCharacter(context);
                 }
@@ -23,6 +23,10 @@ class LetterMeasurer {
                     return this.measureNormalLetter(letter, context);
                 }
             })();
+            if (span.style.letterSpacing !== undefined &&
+                span.style.letterSpacing > 0) {
+                wordWidth += span.style.letterSpacing;
+            }
             curPosWidth += wordWidth;
             result.push(curPosWidth);
         }
@@ -154,6 +158,7 @@ class TextLayout {
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (currentLineMetrics.width + matrics.width < layoutWidth &&
+                    !span.hasLetterSpacing() &&
                     !forceCalcGlyphInfos) {
                     if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
@@ -169,10 +174,13 @@ class TextLayout {
                     }
                 }
                 else {
-                    let advances = matrics.advances
+                    let advances = matrics.advances && !span.hasLetterSpacing()
                         ? [...matrics.advances]
                         : LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
-                    advances.push(matrics.width);
+                    const letterSpacingWidth = span.hasLetterSpacing()
+                        ? span.style.letterSpacing * (span.text.length + 1)
+                        : 0;
+                    advances.push(matrics.width + letterSpacingWidth);
                     if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
                     }

@@ -126,7 +126,7 @@ export class Drawer {
             didExceedMaxLines = true;
           }
 
-          const drawingLeft = (() => {
+          let drawingLeft = (() => {
             if (
               linesDrawingRightBounds[currentDrawLine.lineNumber] === undefined
             ) {
@@ -158,7 +158,12 @@ export class Drawer {
               if (currentDrawText === "\n") {
                 return 0;
               }
-              return context.measureText(currentDrawText).width;
+              const extraLetterSpacing = span.hasLetterSpacing()
+                ? currentDrawText.length * span.style.letterSpacing!
+                : 0;
+              return (
+                context.measureText(currentDrawText).width + extraLetterSpacing
+              );
             })();
 
           linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
@@ -189,11 +194,25 @@ export class Drawer {
             context.shadowBlur = span.style.shadows[0].blurRadius ?? 0;
           }
           context.fillStyle = span.toTextFillStyle();
-          context.fillText(
-            currentDrawText,
-            drawingLeft,
-            textBaseline + currentDrawLine.yOffset
-          );
+          if (span.hasLetterSpacing()) {
+            const letterSpacing = span.style.letterSpacing!;
+            for (let index = 0; index < currentDrawText.length; index++) {
+              const currentDrawLetter = currentDrawText[index];
+              context.fillText(
+                currentDrawLetter,
+                drawingLeft,
+                textBaseline + currentDrawLine.yOffset
+              );
+              const letterWidth = context.measureText(currentDrawLetter).width;
+              drawingLeft += letterWidth + letterSpacing;
+            }
+          } else {
+            context.fillText(
+              currentDrawText,
+              drawingLeft,
+              textBaseline + currentDrawLine.yOffset
+            );
+          }
           context.restore();
 
           logger.debug(

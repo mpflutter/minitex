@@ -16,6 +16,12 @@ export class TextSpan extends Span {
     super();
   }
 
+  hasLetterSpacing() {
+    return (
+      this.style.letterSpacing !== undefined && this.style.letterSpacing > 1
+    );
+  }
+
   toBackgroundFillStyle(): string {
     if (this.style.backgroundColor) {
       return colorToHex(this.style.backgroundColor as Float32Array);

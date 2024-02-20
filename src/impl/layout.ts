@@ -37,13 +37,19 @@ class LetterMeasurer {
     let curPosWidth = 0;
     for (let index = 0; index < span.text.length; index++) {
       const letter = span.text[index];
-      const wordWidth = (() => {
+      let wordWidth = (() => {
         if (isSquareCharacter(letter)) {
           return this.measureSquareCharacter(context);
         } else {
           return this.measureNormalLetter(letter, context);
         }
       })();
+      if (
+        span.style.letterSpacing !== undefined &&
+        span.style.letterSpacing > 0
+      ) {
+        wordWidth += span.style.letterSpacing;
+      }
       curPosWidth += wordWidth;
       result.push(curPosWidth);
     }
@@ -211,6 +217,7 @@ export class TextLayout {
 
         if (
           currentLineMetrics.width + matrics.width < layoutWidth &&
+          !span.hasLetterSpacing() &&
           !forceCalcGlyphInfos
         ) {
           if (span instanceof NewlineSpan) {
@@ -226,13 +233,17 @@ export class TextLayout {
             }
           }
         } else {
-          let advances: number[] = (matrics as any).advances
-            ? [...(matrics as any).advances]
-            : LetterMeasurer.measureLetters(
-                span,
-                TextLayout.sharedLayoutContext
-              );
-          advances.push(matrics.width);
+          let advances: number[] =
+            (matrics as any).advances && !span.hasLetterSpacing()
+              ? [...(matrics as any).advances]
+              : LetterMeasurer.measureLetters(
+                  span,
+                  TextLayout.sharedLayoutContext
+                );
+          const letterSpacingWidth = span.hasLetterSpacing()
+            ? span.style.letterSpacing! * (span.text.length + 1)
+            : 0;
+          advances.push(matrics.width + letterSpacingWidth);
 
           if (span instanceof NewlineSpan) {
             advances = [0, 0];
