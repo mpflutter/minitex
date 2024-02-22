@@ -88,20 +88,20 @@ class Paragraph extends skia_1.SkEmbindObject {
                 if (dx <= 0) {
                     return {
                         pos: lineMetrics.startIndex,
-                        affinity: { value: skia_1.Affinity.Upstream },
+                        affinity: { value: skia_1.Affinity.Downstream },
                     };
                 }
                 else if (dx >= width) {
                     return {
                         pos: lineMetrics.endIndex,
-                        affinity: { value: skia_1.Affinity.Upstream },
+                        affinity: { value: skia_1.Affinity.Downstream },
                     };
                 }
             }
             if (dy >= top + height && isLastLine) {
                 return {
                     pos: lineMetrics.endIndex,
-                    affinity: { value: skia_1.Affinity.Upstream },
+                    affinity: { value: skia_1.Affinity.Downstream },
                 };
             }
         }

@@ -127,19 +127,19 @@ export class Paragraph extends SkEmbindObject {
         if (dx <= 0) {
           return {
             pos: lineMetrics.startIndex,
-            affinity: { value: Affinity.Upstream },
+            affinity: { value: Affinity.Downstream },
           };
         } else if (dx >= width) {
           return {
             pos: lineMetrics.endIndex,
-            affinity: { value: Affinity.Upstream },
+            affinity: { value: Affinity.Downstream },
           };
         }
       }
       if (dy >= top + height && isLastLine) {
         return {
           pos: lineMetrics.endIndex,
-          affinity: { value: Affinity.Upstream },
+          affinity: { value: Affinity.Downstream },
         };
       }
     }
