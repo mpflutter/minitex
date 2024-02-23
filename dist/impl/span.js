@@ -23,6 +23,9 @@ class TextSpan extends Span {
     hasLetterSpacing() {
         return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
     }
+    hasWordSpacing() {
+        return (this.style.wordSpacing !== undefined && this.style.wordSpacing > 1);
+    }
     toBackgroundFillStyle() {
         if (this.style.backgroundColor) {
             return (0, util_1.colorToHex)(this.style.backgroundColor);

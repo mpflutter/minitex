@@ -136,13 +136,20 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    if (span.hasLetterSpacing()) {
+                    if (span.hasLetterSpacing() || span.hasWordSpacing()) {
                         const letterSpacing = span.style.letterSpacing;
                         for (let index = 0; index < currentDrawText.length; index++) {
                             const currentDrawLetter = currentDrawText[index];
                             context.fillText(currentDrawLetter, drawingLeft, textBaseline + currentDrawLine.yOffset);
                             const letterWidth = context.measureText(currentDrawLetter).width;
-                            drawingLeft += letterWidth + letterSpacing;
+                            if (span.hasWordSpacing() &&
+                                currentDrawLetter === " " &&
+                                (0, util_1.isEnglishWord)(currentDrawText[index - 1])) {
+                                drawingLeft += span.style.wordSpacing;
+                            }
+                            else {
+                                drawingLeft += letterWidth + letterSpacing;
+                            }
                         }
                     }
                     else {

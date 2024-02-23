@@ -22,6 +22,12 @@ export class TextSpan extends Span {
     );
   }
 
+  hasWordSpacing() {
+    return (
+      this.style.wordSpacing !== undefined && this.style.wordSpacing > 1
+    );
+  }
+
   toBackgroundFillStyle(): string {
     if (this.style.backgroundColor) {
       return colorToHex(this.style.backgroundColor as Float32Array);

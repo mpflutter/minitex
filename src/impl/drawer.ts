@@ -16,6 +16,7 @@ import {
   colorToHex,
   convertToUpwardToPixelRatio,
   createCanvas,
+  isEnglishWord,
   isSquareCharacter,
 } from "../util";
 import { logger } from "../logger";
@@ -194,7 +195,7 @@ export class Drawer {
             context.shadowBlur = span.style.shadows[0].blurRadius ?? 0;
           }
           context.fillStyle = span.toTextFillStyle();
-          if (span.hasLetterSpacing()) {
+          if (span.hasLetterSpacing() || span.hasWordSpacing()) {
             const letterSpacing = span.style.letterSpacing!;
             for (let index = 0; index < currentDrawText.length; index++) {
               const currentDrawLetter = currentDrawText[index];
@@ -204,7 +205,15 @@ export class Drawer {
                 textBaseline + currentDrawLine.yOffset
               );
               const letterWidth = context.measureText(currentDrawLetter).width;
-              drawingLeft += letterWidth + letterSpacing;
+              if (
+                span.hasWordSpacing() &&
+                currentDrawLetter === " " &&
+                isEnglishWord(currentDrawText[index - 1])
+              ) {
+                drawingLeft += span.style.wordSpacing!;
+              } else {
+                drawingLeft += letterWidth + letterSpacing;
+              }
             }
           } else {
             context.fillText(

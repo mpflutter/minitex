@@ -23,7 +23,7 @@ const valueOfRectXYWH = (x, y, w, h) => {
 };
 exports.valueOfRectXYWH = valueOfRectXYWH;
 function isEnglishWord(str) {
-    const englishRegex = /^[A-Za-z]+$/;
+    const englishRegex = /^[A-Za-z,.]+$/;
     const result = englishRegex.test(str);
     return result;
 }

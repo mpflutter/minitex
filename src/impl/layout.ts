@@ -32,8 +32,8 @@ class LetterMeasurer {
   static measureLetters(
     span: TextSpan,
     context: CanvasRenderingContext2D
-  ): number[] {
-    let result: number[] = [0];
+  ): { advances: number[] } {
+    let advances: number[] = [0];
     let curPosWidth = 0;
     for (let index = 0; index < span.text.length; index++) {
       const letter = span.text[index];
@@ -44,13 +44,19 @@ class LetterMeasurer {
           return this.measureNormalLetter(letter, context);
         }
       })();
-      if (span.hasLetterSpacing()) {
+      if (
+        span.hasWordSpacing() &&
+        letter === " " &&
+        isEnglishWord(span.text[index - 1])
+      ) {
+        wordWidth = span.style.wordSpacing!;
+      } else if (span.hasLetterSpacing()) {
         wordWidth += span.style.letterSpacing!;
       }
       curPosWidth += wordWidth;
-      result.push(curPosWidth);
+      advances.push(curPosWidth);
     }
-    return result;
+    return { advances };
   }
 
   private static measureNormalLetter(
@@ -215,6 +221,7 @@ export class TextLayout {
         if (
           currentLineMetrics.width + matrics.width < layoutWidth &&
           !span.hasLetterSpacing() &&
+          !span.hasWordSpacing() &&
           !forceCalcGlyphInfos
         ) {
           if (span instanceof NewlineSpan) {
@@ -230,17 +237,11 @@ export class TextLayout {
             }
           }
         } else {
-          let advances: number[] =
-            (matrics as any).advances && !span.hasLetterSpacing()
-              ? [...(matrics as any).advances]
-              : LetterMeasurer.measureLetters(
-                  span,
-                  TextLayout.sharedLayoutContext
-                );
-          const letterSpacingWidth = span.hasLetterSpacing()
-            ? span.style.letterSpacing! * (span.text.length + 1)
-            : 0;
-          advances.push(matrics.width + letterSpacingWidth);
+          let letterMeasureResult = LetterMeasurer.measureLetters(
+            span,
+            TextLayout.sharedLayoutContext
+          );
+          let advances: number[] = letterMeasureResult.advances;
 
           if (span instanceof NewlineSpan) {
             advances = [0, 0];
