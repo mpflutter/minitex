@@ -106,7 +106,7 @@ class TextLayout {
         }
     }
     layout(layoutWidth, forceCalcGlyphInfos = false) {
-        var _a;
+        var _a, _b;
         let layoutStartTime;
         if (logger_1.logger.profileMode) {
             layoutStartTime = new Date().getTime();
@@ -130,10 +130,14 @@ class TextLayout {
             height: 0,
             heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
+            justifyWidth: ((_b = this.paragraph.paragraphStyle.textAlign) === null || _b === void 0 ? void 0 : _b.value) === skia_1.TextAlign.Justify
+                ? layoutWidth
+                : undefined,
             left: 0,
             yOffset: 0,
             baseline: 0,
             lineNumber: 0,
+            isLastLine: false,
         };
         let lineMetrics = [];
         const spans = (0, span_1.spanWithNewline)(this.paragraph.spans);
@@ -289,6 +293,7 @@ class TextLayout {
             const layoutCostTime = new Date().getTime() - layoutStartTime;
             logger_1.logger.profile("Layout cost", layoutCostTime);
         }
+        lineMetrics[lineMetrics.length - 1].isLastLine = true;
         this.lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
@@ -304,12 +309,14 @@ class TextLayout {
             height: currentLineMetrics.height,
             heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
+            justifyWidth: currentLineMetrics.justifyWidth,
             left: 0,
             yOffset: currentLineMetrics.yOffset +
                 currentLineMetrics.height * currentLineMetrics.heightMultiplier +
                 currentLineMetrics.height * 0.15, // 行间距
             baseline: currentLineMetrics.baseline,
             lineNumber: currentLineMetrics.lineNumber + 1,
+            isLastLine: false,
         };
     }
 }

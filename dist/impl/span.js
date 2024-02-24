@@ -24,7 +24,11 @@ class TextSpan extends Span {
         return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
     }
     hasWordSpacing() {
-        return (this.style.wordSpacing !== undefined && this.style.wordSpacing > 1);
+        return this.style.wordSpacing !== undefined && this.style.wordSpacing > 1;
+    }
+    hasJustifySpacing(paragraphStyle) {
+        var _a;
+        return ((_a = paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value) === skia_1.TextAlign.Justify;
     }
     toBackgroundFillStyle() {
         if (this.style.backgroundColor) {

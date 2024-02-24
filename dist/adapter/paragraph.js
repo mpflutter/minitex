@@ -177,19 +177,21 @@ class Paragraph extends skia_1.SkEmbindObject {
         return 0;
     }
     getMaxIntrinsicWidth() {
+        var _a;
         const lineMetrics = this.getLineMetrics();
         let maxWidth = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
-            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+            maxWidth = Math.max(maxWidth, (_a = lineMetrics[i].justifyWidth) !== null && _a !== void 0 ? _a : lineMetrics[i].width);
         }
         // console.log("getMaxIntrinsicWidth", maxWidth);
         return maxWidth;
     }
     getMaxWidth() {
+        var _a;
         const lineMetrics = this.getLineMetrics();
         let maxWidth = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
-            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+            maxWidth = Math.max(maxWidth, (_a = lineMetrics[i].justifyWidth) !== null && _a !== void 0 ? _a : lineMetrics[i].width);
         }
         // console.log("getMaxWidth", maxWidth);
         return maxWidth;

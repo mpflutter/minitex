@@ -4,7 +4,12 @@
 
 declare var wx: any;
 import { type Paragraph } from "../adapter/paragraph";
-import { GlyphInfo, LineMetrics, TextDirection } from "../adapter/skia";
+import {
+  GlyphInfo,
+  LineMetrics,
+  TextAlign,
+  TextDirection,
+} from "../adapter/skia";
 import { FontSlant } from "../adapter/skia";
 import { logger } from "../logger";
 import {
@@ -175,10 +180,15 @@ export class TextLayout {
         (this.paragraph.paragraphStyle.heightMultiplier ?? 1.5) / 1.5
       ),
       width: 0,
+      justifyWidth:
+        this.paragraph.paragraphStyle.textAlign?.value === TextAlign.Justify
+          ? layoutWidth
+          : undefined,
       left: 0,
       yOffset: 0,
       baseline: 0,
       lineNumber: 0,
+      isLastLine: false,
     };
     let lineMetrics: LineMetrics[] = [];
     const spans = spanWithNewline(this.paragraph.spans);
@@ -368,6 +378,7 @@ export class TextLayout {
       const layoutCostTime = new Date().getTime() - layoutStartTime;
       logger.profile("Layout cost", layoutCostTime);
     }
+    lineMetrics[lineMetrics.length - 1].isLastLine = true;
     this.lineMetrics = lineMetrics;
   }
 
@@ -386,6 +397,7 @@ export class TextLayout {
         (this.paragraph.paragraphStyle.heightMultiplier ?? 1.5) / 1.5
       ),
       width: 0,
+      justifyWidth: currentLineMetrics.justifyWidth,
       left: 0,
       yOffset:
         currentLineMetrics.yOffset +
@@ -393,6 +405,7 @@ export class TextLayout {
         currentLineMetrics.height * 0.15, // 行间距
       baseline: currentLineMetrics.baseline,
       lineNumber: currentLineMetrics.lineNumber + 1,
+      isLastLine: false,
     };
   }
 }

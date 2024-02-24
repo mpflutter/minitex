@@ -2,7 +2,13 @@
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 
-import { LetterRect, FontSlant, TextStyle } from "../adapter/skia";
+import {
+  LetterRect,
+  FontSlant,
+  TextStyle,
+  ParagraphStyle,
+  TextAlign,
+} from "../adapter/skia";
 import { colorToHex } from "../util";
 
 export class Span {
@@ -23,9 +29,11 @@ export class TextSpan extends Span {
   }
 
   hasWordSpacing() {
-    return (
-      this.style.wordSpacing !== undefined && this.style.wordSpacing > 1
-    );
+    return this.style.wordSpacing !== undefined && this.style.wordSpacing > 1;
+  }
+
+  hasJustifySpacing(paragraphStyle: ParagraphStyle) {
+    return paragraphStyle.textAlign?.value === TextAlign.Justify;
   }
 
   toBackgroundFillStyle(): string {

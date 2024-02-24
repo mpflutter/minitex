@@ -136,8 +136,16 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    if (span.hasLetterSpacing() || span.hasWordSpacing()) {
-                        const letterSpacing = span.style.letterSpacing;
+                    if (span.hasLetterSpacing() ||
+                        span.hasWordSpacing() ||
+                        span.hasJustifySpacing(this.paragraph.paragraphStyle)) {
+                        const letterSpacing = span.hasLetterSpacing()
+                            ? span.style.letterSpacing
+                            : 0;
+                        const justifySpacing = span.hasJustifySpacing(this.paragraph.paragraphStyle) &&
+                            !currentDrawLine.isLastLine
+                            ? this.computeJustifySpacing(currentDrawText, currentDrawLine.width, currentDrawLine.justifyWidth)
+                            : 0;
                         for (let index = 0; index < currentDrawText.length; index++) {
                             const currentDrawLetter = currentDrawText[index];
                             context.fillText(currentDrawLetter, drawingLeft, textBaseline + currentDrawLine.yOffset);
@@ -149,6 +157,9 @@ class Drawer {
                             }
                             else {
                                 drawingLeft += letterWidth + letterSpacing;
+                            }
+                            if (!(0, util_1.isEnglishWord)(currentDrawText[index])) {
+                                drawingLeft += justifySpacing;
                             }
                         }
                     }
@@ -174,6 +185,15 @@ class Drawer {
         });
         context.restore();
         return context.getImageData(0, 0, width, height);
+    }
+    computeJustifySpacing(text, lineWidth, justifyWidth) {
+        let count = 0;
+        for (let index = 0; index < text.length; index++) {
+            if (!(0, util_1.isEnglishWord)(text[index])) {
+                count++;
+            }
+        }
+        return (justifyWidth - lineWidth) / (count - 1);
     }
     drawBackground(span, context, options) {
         if (span.style.backgroundColor) {

@@ -225,7 +225,10 @@ export class Paragraph extends SkEmbindObject {
     const lineMetrics = this.getLineMetrics();
     let maxWidth = 0;
     for (let i = 0; i < lineMetrics.length; i++) {
-      maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+      maxWidth = Math.max(
+        maxWidth,
+        lineMetrics[i].justifyWidth ?? lineMetrics[i].width
+      );
     }
     // console.log("getMaxIntrinsicWidth", maxWidth);
     return maxWidth;
@@ -235,7 +238,10 @@ export class Paragraph extends SkEmbindObject {
     const lineMetrics = this.getLineMetrics();
     let maxWidth = 0;
     for (let i = 0; i < lineMetrics.length; i++) {
-      maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+      maxWidth = Math.max(
+        maxWidth,
+        lineMetrics[i].justifyWidth ?? lineMetrics[i].width
+      );
     }
     // console.log("getMaxWidth", maxWidth);
     return maxWidth;

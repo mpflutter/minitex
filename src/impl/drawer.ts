@@ -4,7 +4,12 @@
 
 declare var wx: any;
 import { Paragraph } from "../adapter/paragraph";
-import { LineMetrics, TextAlign, TextDirection } from "../adapter/skia";
+import {
+  LineMetrics,
+  ParagraphStyle,
+  TextAlign,
+  TextDirection,
+} from "../adapter/skia";
 import {
   DecorationStyle,
   LineThroughDecoration,
@@ -195,8 +200,23 @@ export class Drawer {
             context.shadowBlur = span.style.shadows[0].blurRadius ?? 0;
           }
           context.fillStyle = span.toTextFillStyle();
-          if (span.hasLetterSpacing() || span.hasWordSpacing()) {
-            const letterSpacing = span.style.letterSpacing!;
+          if (
+            span.hasLetterSpacing() ||
+            span.hasWordSpacing() ||
+            span.hasJustifySpacing(this.paragraph.paragraphStyle)
+          ) {
+            const letterSpacing = span.hasLetterSpacing()
+              ? span.style.letterSpacing!
+              : 0;
+            const justifySpacing =
+              span.hasJustifySpacing(this.paragraph.paragraphStyle) &&
+              !currentDrawLine.isLastLine
+                ? this.computeJustifySpacing(
+                    currentDrawText,
+                    currentDrawLine.width,
+                    currentDrawLine.justifyWidth!
+                  )
+                : 0;
             for (let index = 0; index < currentDrawText.length; index++) {
               const currentDrawLetter = currentDrawText[index];
               context.fillText(
@@ -213,6 +233,9 @@ export class Drawer {
                 drawingLeft += span.style.wordSpacing!;
               } else {
                 drawingLeft += letterWidth + letterSpacing;
+              }
+              if (!isEnglishWord(currentDrawText[index])) {
+                drawingLeft += justifySpacing;
               }
             }
           } else {
@@ -251,6 +274,20 @@ export class Drawer {
 
     context.restore();
     return context.getImageData(0, 0, width, height);
+  }
+
+  private computeJustifySpacing(
+    text: string,
+    lineWidth: number,
+    justifyWidth: number
+  ): number {
+    let count = 0;
+    for (let index = 0; index < text.length; index++) {
+      if (!isEnglishWord(text[index])) {
+        count++;
+      }
+    }
+    return (justifyWidth - lineWidth) / (count - 1);
   }
 
   private drawBackground(

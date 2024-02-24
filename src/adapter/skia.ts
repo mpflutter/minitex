@@ -145,6 +145,8 @@ export interface LineMetrics {
   heightMultiplier: number;
   /** width of the line */
   width: number;
+  /** maxWidth of the line */
+  justifyWidth?: number;
   /** The left edge of the line. The right edge can be obtained with `left + width` */
   left: number;
   /** The y offset of the line to top. */
@@ -153,6 +155,7 @@ export interface LineMetrics {
   baseline: number;
   /** Zero indexed line number. */
   lineNumber: number;
+  isLastLine: boolean;
 }
 
 export interface RectWithDirection {
