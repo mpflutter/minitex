@@ -194,6 +194,7 @@ class TextLayout {
                         const letter = span.text[index];
                         currentWord += letter;
                         let currentLetterLeft = currentWordWidth;
+                        let spanEnded = span.text[index + 1] === undefined;
                         let nextWord = (_c = currentWord + span.text[index + 1]) !== null && _c !== void 0 ? _c : "";
                         if (advances[index + 1] === undefined) {
                             currentWordWidth += advances[index] - advances[index - 1];
@@ -211,7 +212,10 @@ class TextLayout {
                         currentWordLength += 1;
                         canBreak = true;
                         forceBreak = false;
-                        if ((0, util_1.isEnglishWord)(nextWord)) {
+                        if (spanEnded) {
+                            canBreak = true;
+                        }
+                        else if ((0, util_1.isEnglishWord)(nextWord)) {
                             canBreak = false;
                         }
                         if ((0, util_1.isPunctuation)(nextWord[nextWord.length - 1]) &&

@@ -258,6 +258,7 @@ export class TextLayout {
             const letter = span.text[index];
             currentWord += letter;
             let currentLetterLeft = currentWordWidth;
+            let spanEnded = span.text[index + 1] === undefined;
             let nextWord = currentWord + span.text[index + 1] ?? "";
             if (advances[index + 1] === undefined) {
               currentWordWidth += advances[index] - advances[index - 1];
@@ -274,7 +275,9 @@ export class TextLayout {
             canBreak = true;
             forceBreak = false;
 
-            if (isEnglishWord(nextWord)) {
+            if (spanEnded) {
+              canBreak = true;
+            } else if (isEnglishWord(nextWord)) {
               canBreak = false;
             }
             if (
