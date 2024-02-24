@@ -89,20 +89,20 @@ class Paragraph extends skia_1.SkEmbindObject {
                 if (dx <= 0) {
                     return {
                         pos: lineMetrics.startIndex,
-                        affinity: { value: skia_1.Affinity.Upstream },
+                        affinity: { value: skia_1.Affinity.Downstream },
                     };
                 }
                 else if (dx >= width) {
                     return {
                         pos: lineMetrics.endIndex,
-                        affinity: { value: skia_1.Affinity.Upstream },
+                        affinity: { value: skia_1.Affinity.Downstream },
                     };
                 }
             }
             if (dy >= top + height && isLastLine) {
                 return {
                     pos: lineMetrics.endIndex,
-                    affinity: { value: skia_1.Affinity.Upstream },
+                    affinity: { value: skia_1.Affinity.Downstream },
                 };
             }
         }
@@ -178,19 +178,21 @@ class Paragraph extends skia_1.SkEmbindObject {
         return 0;
     }
     getMaxIntrinsicWidth() {
+        var _a;
         const lineMetrics = this.getLineMetrics();
         let maxWidth = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
-            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+            maxWidth = Math.max(maxWidth, (_a = lineMetrics[i].justifyWidth) !== null && _a !== void 0 ? _a : lineMetrics[i].width);
         }
         // console.log("getMaxIntrinsicWidth", maxWidth);
         return maxWidth;
     }
     getMaxWidth() {
+        var _a;
         const lineMetrics = this.getLineMetrics();
         let maxWidth = 0;
         for (let i = 0; i < lineMetrics.length; i++) {
-            maxWidth = Math.max(maxWidth, lineMetrics[i].width);
+            maxWidth = Math.max(maxWidth, (_a = lineMetrics[i].justifyWidth) !== null && _a !== void 0 ? _a : lineMetrics[i].width);
         }
         // console.log("getMaxWidth", maxWidth);
         return maxWidth;
@@ -764,13 +766,31 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    if (span.hasLetterSpacing()) {
-                        const letterSpacing = span.style.letterSpacing;
+                    if (span.hasLetterSpacing() ||
+                        span.hasWordSpacing() ||
+                        span.hasJustifySpacing(this.paragraph.paragraphStyle)) {
+                        const letterSpacing = span.hasLetterSpacing()
+                            ? span.style.letterSpacing
+                            : 0;
+                        const justifySpacing = span.hasJustifySpacing(this.paragraph.paragraphStyle) &&
+                            !currentDrawLine.isLastLine
+                            ? this.computeJustifySpacing(currentDrawText, currentDrawLine.width, currentDrawLine.justifyWidth)
+                            : 0;
                         for (let index = 0; index < currentDrawText.length; index++) {
                             const currentDrawLetter = currentDrawText[index];
                             context.fillText(currentDrawLetter, drawingLeft, textBaseline + currentDrawLine.yOffset);
                             const letterWidth = context.measureText(currentDrawLetter).width;
-                            drawingLeft += letterWidth + letterSpacing;
+                            if (span.hasWordSpacing() &&
+                                currentDrawLetter === " " &&
+                                (0, util_1.isEnglishWord)(currentDrawText[index - 1])) {
+                                drawingLeft += span.style.wordSpacing;
+                            }
+                            else {
+                                drawingLeft += letterWidth + letterSpacing;
+                            }
+                            if (!(0, util_1.isEnglishWord)(currentDrawText[index])) {
+                                drawingLeft += justifySpacing;
+                            }
                         }
                     }
                     else {
@@ -795,6 +815,15 @@ class Drawer {
         });
         context.restore();
         return context.getImageData(0, 0, width, height);
+    }
+    computeJustifySpacing(text, lineWidth, justifyWidth) {
+        let count = 0;
+        for (let index = 0; index < text.length; index++) {
+            if (!(0, util_1.isEnglishWord)(text[index])) {
+                count++;
+            }
+        }
+        return (justifyWidth - lineWidth) / (count - 1);
     }
     drawBackground(span, context, options) {
         if (span.style.backgroundColor) {
@@ -876,7 +905,7 @@ const util_1 = require("../util");
 const span_1 = require("./span");
 class LetterMeasurer {
     static measureLetters(span, context) {
-        let result = [0];
+        let advances = [0];
         let curPosWidth = 0;
         for (let index = 0; index < span.text.length; index++) {
             const letter = span.text[index];
@@ -888,13 +917,18 @@ class LetterMeasurer {
                     return this.measureNormalLetter(letter, context);
                 }
             })();
-            if (span.hasLetterSpacing()) {
+            if (span.hasWordSpacing() &&
+                letter === " " &&
+                (0, util_1.isEnglishWord)(span.text[index - 1])) {
+                wordWidth = span.style.wordSpacing;
+            }
+            else if (span.hasLetterSpacing()) {
                 wordWidth += span.style.letterSpacing;
             }
             curPosWidth += wordWidth;
-            result.push(curPosWidth);
+            advances.push(curPosWidth);
         }
-        return result;
+        return { advances };
     }
     static measureNormalLetter(letter, context) {
         var _a;
@@ -966,7 +1000,7 @@ class TextLayout {
         }
     }
     layout(layoutWidth, forceCalcGlyphInfos = false) {
-        var _a;
+        var _a, _b;
         let layoutStartTime;
         if (logger_1.logger.profileMode) {
             layoutStartTime = new Date().getTime();
@@ -990,10 +1024,14 @@ class TextLayout {
             height: 0,
             heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
+            justifyWidth: ((_b = this.paragraph.paragraphStyle.textAlign) === null || _b === void 0 ? void 0 : _b.value) === skia_1.TextAlign.Justify
+                ? layoutWidth
+                : undefined,
             left: 0,
             yOffset: 0,
             baseline: 0,
             lineNumber: 0,
+            isLastLine: false,
         };
         let lineMetrics = [];
         const spans = (0, span_1.spanWithNewline)(this.paragraph.spans);
@@ -1023,6 +1061,7 @@ class TextLayout {
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (currentLineMetrics.width + matrics.width < layoutWidth &&
                     !span.hasLetterSpacing() &&
+                    !span.hasWordSpacing() &&
                     !forceCalcGlyphInfos) {
                     if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
@@ -1038,13 +1077,8 @@ class TextLayout {
                     }
                 }
                 else {
-                    let advances = matrics.advances && !span.hasLetterSpacing()
-                        ? [...matrics.advances]
-                        : LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
-                    const letterSpacingWidth = span.hasLetterSpacing()
-                        ? span.style.letterSpacing * (span.text.length + 1)
-                        : 0;
-                    advances.push(matrics.width + letterSpacingWidth);
+                    let letterMeasureResult = LetterMeasurer.measureLetters(span, TextLayout.sharedLayoutContext);
+                    let advances = letterMeasureResult.advances;
                     if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
                     }
@@ -1058,6 +1092,7 @@ class TextLayout {
                         const letter = span.text[index];
                         currentWord += letter;
                         let currentLetterLeft = currentWordWidth;
+                        let spanEnded = span.text[index + 1] === undefined;
                         let nextWord = (_c = currentWord + span.text[index + 1]) !== null && _c !== void 0 ? _c : "";
                         if (advances[index + 1] === undefined) {
                             currentWordWidth += advances[index] - advances[index - 1];
@@ -1075,7 +1110,10 @@ class TextLayout {
                         currentWordLength += 1;
                         canBreak = true;
                         forceBreak = false;
-                        if ((0, util_1.isEnglishWord)(nextWord)) {
+                        if (spanEnded) {
+                            canBreak = true;
+                        }
+                        else if ((0, util_1.isEnglishWord)(nextWord)) {
                             canBreak = false;
                         }
                         if ((0, util_1.isPunctuation)(nextWord[nextWord.length - 1]) &&
@@ -1149,6 +1187,7 @@ class TextLayout {
             const layoutCostTime = new Date().getTime() - layoutStartTime;
             logger_1.logger.profile("Layout cost", layoutCostTime);
         }
+        lineMetrics[lineMetrics.length - 1].isLastLine = true;
         this.lineMetrics = lineMetrics;
     }
     createNewLine(currentLineMetrics) {
@@ -1164,12 +1203,14 @@ class TextLayout {
             height: currentLineMetrics.height,
             heightMultiplier: Math.max(1, ((_a = this.paragraph.paragraphStyle.heightMultiplier) !== null && _a !== void 0 ? _a : 1.5) / 1.5),
             width: 0,
+            justifyWidth: currentLineMetrics.justifyWidth,
             left: 0,
             yOffset: currentLineMetrics.yOffset +
                 currentLineMetrics.height * currentLineMetrics.heightMultiplier +
                 currentLineMetrics.height * 0.15, // 行间距
             baseline: currentLineMetrics.baseline,
             lineNumber: currentLineMetrics.lineNumber + 1,
+            isLastLine: false,
         };
     }
 }
@@ -1200,6 +1241,13 @@ class TextSpan extends Span {
     }
     hasLetterSpacing() {
         return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
+    }
+    hasWordSpacing() {
+        return this.style.wordSpacing !== undefined && this.style.wordSpacing > 1;
+    }
+    hasJustifySpacing(paragraphStyle) {
+        var _a;
+        return ((_a = paragraphStyle.textAlign) === null || _a === void 0 ? void 0 : _a.value) === skia_1.TextAlign.Justify;
     }
     toBackgroundFillStyle() {
         if (this.style.backgroundColor) {
@@ -1387,7 +1435,7 @@ const valueOfRectXYWH = (x, y, w, h) => {
 };
 exports.valueOfRectXYWH = valueOfRectXYWH;
 function isEnglishWord(str) {
-    const englishRegex = /^[A-Za-z]+$/;
+    const englishRegex = /^[A-Za-z,.]+$/;
     const result = englishRegex.test(str);
     return result;
 }
