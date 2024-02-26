@@ -161,9 +161,8 @@ export class TextLayout {
     }
     if (layoutWidth < 0) {
       layoutWidth = this.previousLayoutWidth;
-    } else {
-      this.previousLayoutWidth = layoutWidth;
     }
+    this.previousLayoutWidth = layoutWidth;
     this.initCanvas();
     this.glyphInfos = [];
     let currentLineMetrics: LineMetrics = {
@@ -234,6 +233,7 @@ export class TextLayout {
           !span.hasWordSpacing() &&
           !forceCalcGlyphInfos
         ) {
+          // fast measure
           if (span instanceof NewlineSpan) {
             const newLineMatrics: LineMetrics =
               this.createNewLine(currentLineMetrics);
@@ -255,6 +255,13 @@ export class TextLayout {
 
           if (span instanceof NewlineSpan) {
             advances = [0, 0];
+          }
+
+          if (
+            Math.abs(advances[advances.length - 1] - layoutWidth) < 10 &&
+            layoutWidth === this.previousLayoutWidth
+          ) {
+            layoutWidth = advances[advances.length - 1];
           }
 
           let currentWord = "";
@@ -328,7 +335,7 @@ export class TextLayout {
               continue;
             } else if (
               !forceBreak &&
-              currentLineMetrics.width + currentWordWidth < layoutWidth
+              currentLineMetrics.width + currentWordWidth <= layoutWidth
             ) {
               currentLineMetrics.width += currentWordWidth;
               currentLineMetrics.endIndex += currentWordLength;
@@ -338,7 +345,7 @@ export class TextLayout {
               canBreak = true;
             } else if (
               forceBreak ||
-              currentLineMetrics.width + currentWordWidth >= layoutWidth
+              currentLineMetrics.width + currentWordWidth > layoutWidth
             ) {
               const newLineMatrics: LineMetrics =
                 this.createNewLine(currentLineMetrics);
