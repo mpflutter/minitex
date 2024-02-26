@@ -114,9 +114,7 @@ class TextLayout {
         if (layoutWidth < 0) {
             layoutWidth = this.previousLayoutWidth;
         }
-        else {
-            this.previousLayoutWidth = layoutWidth;
-        }
+        this.previousLayoutWidth = layoutWidth;
         this.initCanvas();
         this.glyphInfos = [];
         let currentLineMetrics = {
@@ -169,6 +167,7 @@ class TextLayout {
                     !span.hasLetterSpacing() &&
                     !span.hasWordSpacing() &&
                     !forceCalcGlyphInfos) {
+                    // fast measure
                     if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
                         lineMetrics.push(currentLineMetrics);
@@ -187,6 +186,10 @@ class TextLayout {
                     let advances = letterMeasureResult.advances;
                     if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
+                    }
+                    if (Math.abs(advances[advances.length - 1] - layoutWidth) < 10 &&
+                        layoutWidth === this.previousLayoutWidth) {
+                        layoutWidth = advances[advances.length - 1];
                     }
                     let currentWord = "";
                     let currentWordWidth = 0;
@@ -251,7 +254,7 @@ class TextLayout {
                             continue;
                         }
                         else if (!forceBreak &&
-                            currentLineMetrics.width + currentWordWidth < layoutWidth) {
+                            currentLineMetrics.width + currentWordWidth <= layoutWidth) {
                             currentLineMetrics.width += currentWordWidth;
                             currentLineMetrics.endIndex += currentWordLength;
                             currentWord = "";
@@ -260,7 +263,7 @@ class TextLayout {
                             canBreak = true;
                         }
                         else if (forceBreak ||
-                            currentLineMetrics.width + currentWordWidth >= layoutWidth) {
+                            currentLineMetrics.width + currentWordWidth > layoutWidth) {
                             const newLineMatrics = this.createNewLine(currentLineMetrics);
                             lineMetrics.push(currentLineMetrics);
                             currentLineMetrics = newLineMatrics;

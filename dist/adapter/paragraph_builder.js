@@ -9,7 +9,7 @@ const logger_1 = require("../logger");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.SkEmbindObject {
-    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection) {
+    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts) {
         var _a;
         const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
         if (fontFamilies && fontFamilies[0] === "MiniTex") {
@@ -17,6 +17,14 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
             return new ParagraphBuilder(style);
         }
         else {
+            if (fontFamilies) {
+                if (fontFamilies.filter((it) => {
+                    return embeddingFonts.indexOf(it) >= 0;
+                }).length === 0) {
+                    logger_1.logger.info("use minitex paragraph builder.", fontFamilies);
+                    return new ParagraphBuilder(style);
+                }
+            }
             logger_1.logger.info("use skia paragraph builder.", fontFamilies);
             return originMakeFromFontCollectionMethod(style, fontCollection);
         }

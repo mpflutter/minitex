@@ -24,13 +24,24 @@ export class ParagraphBuilder extends SkEmbindObject {
       fontCollection: any
     ) => any,
     style: ParagraphStyle,
-    fontCollection: any
+    fontCollection: any,
+    embeddingFonts: string[]
   ) {
     const fontFamilies = style.textStyle?.fontFamilies;
     if (fontFamilies && fontFamilies[0] === "MiniTex") {
       logger.info("use minitex paragraph builder.", fontFamilies);
       return new ParagraphBuilder(style);
     } else {
+      if (fontFamilies) {
+        if (
+          fontFamilies.filter((it) => {
+            return embeddingFonts.indexOf(it) >= 0;
+          }).length === 0
+        ) {
+          logger.info("use minitex paragraph builder.", fontFamilies);
+          return new ParagraphBuilder(style);
+        }
+      }
       logger.info("use skia paragraph builder.", fontFamilies);
       return originMakeFromFontCollectionMethod(style, fontCollection);
     }

@@ -5,11 +5,13 @@
 import { Drawer } from "./impl/drawer";
 import { drawParagraph } from "./adapter/paragraph";
 import { ParagraphBuilder } from "./adapter/paragraph_builder";
+import { LogLevel, logger } from "./logger";
 // import { logger } from "./logger";
 
 export class MiniTex {
-  static install(canvasKit: any, pixelRatio: number) {
+  static install(canvasKit: any, pixelRatio: number, embeddingFonts: string[]) {
     // logger.profileMode = true;
+    logger.setLogLevel(LogLevel.ERROR);
     Drawer.pixelRatio = pixelRatio;
     const originMakeFromFontCollectionMethod =
       canvasKit.ParagraphBuilder.MakeFromFontCollection;
@@ -20,7 +22,8 @@ export class MiniTex {
       return ParagraphBuilder.MakeFromFontCollection(
         originMakeFromFontCollectionMethod,
         style,
-        fontCollection
+        fontCollection,
+        embeddingFonts
       );
     };
     const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;
