@@ -331,7 +331,7 @@ const logger_1 = require("../logger");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.SkEmbindObject {
-    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection) {
+    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts) {
         var _a;
         const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
         if (fontFamilies && fontFamilies[0] === "MiniTex") {
@@ -339,6 +339,14 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
             return new ParagraphBuilder(style);
         }
         else {
+            if (fontFamilies) {
+                if (fontFamilies.filter((it) => {
+                    return embeddingFonts.indexOf(it) >= 0;
+                }).length === 0) {
+                    logger_1.logger.info("use minitex paragraph builder.", fontFamilies);
+                    return new ParagraphBuilder(style);
+                }
+            }
             logger_1.logger.info("use skia paragraph builder.", fontFamilies);
             return originMakeFromFontCollectionMethod(style, fontCollection);
         }
@@ -1008,9 +1016,7 @@ class TextLayout {
         if (layoutWidth < 0) {
             layoutWidth = this.previousLayoutWidth;
         }
-        else {
-            this.previousLayoutWidth = layoutWidth;
-        }
+        this.previousLayoutWidth = layoutWidth;
         this.initCanvas();
         this.glyphInfos = [];
         let currentLineMetrics = {
@@ -1063,6 +1069,7 @@ class TextLayout {
                     !span.hasLetterSpacing() &&
                     !span.hasWordSpacing() &&
                     !forceCalcGlyphInfos) {
+                    // fast measure
                     if (span instanceof span_1.NewlineSpan) {
                         const newLineMatrics = this.createNewLine(currentLineMetrics);
                         lineMetrics.push(currentLineMetrics);
@@ -1081,6 +1088,10 @@ class TextLayout {
                     let advances = letterMeasureResult.advances;
                     if (span instanceof span_1.NewlineSpan) {
                         advances = [0, 0];
+                    }
+                    if (Math.abs(advances[advances.length - 1] - layoutWidth) < 10 &&
+                        layoutWidth === this.previousLayoutWidth) {
+                        layoutWidth = advances[advances.length - 1];
                     }
                     let currentWord = "";
                     let currentWordWidth = 0;
@@ -1145,7 +1156,7 @@ class TextLayout {
                             continue;
                         }
                         else if (!forceBreak &&
-                            currentLineMetrics.width + currentWordWidth < layoutWidth) {
+                            currentLineMetrics.width + currentWordWidth <= layoutWidth) {
                             currentLineMetrics.width += currentWordWidth;
                             currentLineMetrics.endIndex += currentWordLength;
                             currentWord = "";
@@ -1154,7 +1165,7 @@ class TextLayout {
                             canBreak = true;
                         }
                         else if (forceBreak ||
-                            currentLineMetrics.width + currentWordWidth >= layoutWidth) {
+                            currentLineMetrics.width + currentWordWidth > layoutWidth) {
                             const newLineMatrics = this.createNewLine(currentLineMetrics);
                             lineMetrics.push(currentLineMetrics);
                             currentLineMetrics = newLineMatrics;
@@ -1338,14 +1349,16 @@ exports.MiniTex = void 0;
 const drawer_1 = require("./impl/drawer");
 const paragraph_1 = require("./adapter/paragraph");
 const paragraph_builder_1 = require("./adapter/paragraph_builder");
+const logger_1 = require("./logger");
 // import { logger } from "./logger";
 class MiniTex {
-    static install(canvasKit, pixelRatio) {
+    static install(canvasKit, pixelRatio, embeddingFonts) {
         // logger.profileMode = true;
+        logger_1.logger.setLogLevel(logger_1.LogLevel.ERROR);
         drawer_1.Drawer.pixelRatio = pixelRatio;
         const originMakeFromFontCollectionMethod = canvasKit.ParagraphBuilder.MakeFromFontCollection;
         canvasKit.ParagraphBuilder.MakeFromFontCollection = function (style, fontCollection) {
-            return paragraph_builder_1.ParagraphBuilder.MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection);
+            return paragraph_builder_1.ParagraphBuilder.MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts);
         };
         const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;
         canvasKit.Canvas.prototype.drawParagraph = function (paragraph, dx, dy) {
@@ -1360,7 +1373,7 @@ class MiniTex {
 }
 exports.MiniTex = MiniTex;
 
-},{"./adapter/paragraph":1,"./adapter/paragraph_builder":2,"./impl/drawer":4}],8:[function(require,module,exports){
+},{"./adapter/paragraph":1,"./adapter/paragraph_builder":2,"./impl/drawer":4,"./logger":8}],8:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
