@@ -200,7 +200,20 @@ export class Drawer {
             context.shadowBlur = span.style.shadows[0].blurRadius ?? 0;
           }
           context.fillStyle = span.toTextFillStyle();
-          if (
+          if (this.paragraph.iconFontData) {
+            for (let index = 0; index < currentDrawText.length; index++) {
+              const currentDrawLetter = currentDrawText[index];
+              const letterWidth = span.style.fontSize ?? 14;
+              this.fillIcon(
+                context,
+                currentDrawLetter,
+                letterWidth,
+                drawingLeft,
+                textBaseline + currentDrawLine.yOffset
+              );
+              drawingLeft += letterWidth;
+            }
+          } else if (
             span.hasLetterSpacing() ||
             span.hasWordSpacing() ||
             span.hasJustifySpacing(this.paragraph.paragraphStyle)
@@ -274,6 +287,60 @@ export class Drawer {
 
     context.restore();
     return context.getImageData(0, 0, width, height);
+  }
+
+  private fillIcon(
+    context: CanvasRenderingContext2D,
+    text: string,
+    fontSize: number,
+    x: number,
+    y: number
+  ) {
+    context.save();
+    const svgPath = this.paragraph.iconFontMap?.[text];
+    if (!svgPath) return;
+    const pathCommands = svgPath.match(/[A-Za-z]\d+([\.\d,]+)?/g);
+    if (!pathCommands) return;
+    context.beginPath();
+    let lastControlPoint = null;
+    pathCommands.forEach((command) => {
+      const type = command.charAt(0);
+      const args = command
+        .substring(1)
+        .split(",")
+        .map(parseFloat)
+        .map((it, index) => {
+          let value = it;
+          if (index % 2 === 1) {
+            value = 150 - value + 150;
+          }
+          return value * (fontSize / 300);
+        });
+      if (type === "M") {
+        context.moveTo(args[0], args[1]);
+      } else if (type === "L") {
+        context.lineTo(args[0], args[1]);
+      } else if (type === "C") {
+        context.bezierCurveTo(
+          args[0],
+          args[1],
+          args[2],
+          args[3],
+          args[4],
+          args[5]
+        );
+        lastControlPoint = [args[2], args[3]];
+      } else if (type === "Q") {
+        context.quadraticCurveTo(args[0], args[1], args[2], args[3]);
+        lastControlPoint = [args[0], args[1]];
+      } else if (type === "A") {
+        // no need A
+      } else if (type === "Z") {
+        context.closePath();
+      }
+    });
+    context.fill();
+    context.restore();
   }
 
   private computeJustifySpacing(

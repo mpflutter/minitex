@@ -73,8 +73,17 @@ export const drawParagraph = function (
 };
 
 export class Paragraph extends SkEmbindObject {
-  constructor(readonly spans: Span[], readonly paragraphStyle: ParagraphStyle) {
+  iconFontMap?: Record<string, string>;
+
+  constructor(
+    readonly spans: Span[],
+    readonly paragraphStyle: ParagraphStyle,
+    readonly iconFontData?: string
+  ) {
     super();
+    if (this.iconFontData) {
+      this.iconFontMap = JSON.parse(this.iconFontData);
+    }
   }
 
   delete(): void {

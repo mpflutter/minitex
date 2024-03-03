@@ -41,7 +41,7 @@ class Drawer {
             linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
         });
         spans.forEach((span) => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             if (didExceedMaxLines)
                 return;
             if (span instanceof span_1.TextSpan) {
@@ -136,7 +136,15 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    if (span.hasLetterSpacing() ||
+                    if (this.paragraph.iconFontData) {
+                        for (let index = 0; index < currentDrawText.length; index++) {
+                            const currentDrawLetter = currentDrawText[index];
+                            const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
+                            this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                            drawingLeft += letterWidth;
+                        }
+                    }
+                    else if (span.hasLetterSpacing() ||
                         span.hasWordSpacing() ||
                         span.hasJustifySpacing(this.paragraph.paragraphStyle)) {
                         const letterSpacing = span.hasLetterSpacing()
@@ -185,6 +193,54 @@ class Drawer {
         });
         context.restore();
         return context.getImageData(0, 0, width, height);
+    }
+    fillIcon(context, text, fontSize, x, y) {
+        var _a;
+        context.save();
+        const svgPath = (_a = this.paragraph.iconFontMap) === null || _a === void 0 ? void 0 : _a[text];
+        if (!svgPath)
+            return;
+        const pathCommands = svgPath.match(/[A-Za-z]\d+([\.\d,]+)?/g);
+        if (!pathCommands)
+            return;
+        context.beginPath();
+        let lastControlPoint = null;
+        pathCommands.forEach((command) => {
+            const type = command.charAt(0);
+            const args = command
+                .substring(1)
+                .split(",")
+                .map(parseFloat)
+                .map((it, index) => {
+                let value = it;
+                if (index % 2 === 1) {
+                    value = 150 - value + 150;
+                }
+                return value * (fontSize / 300);
+            });
+            if (type === "M") {
+                context.moveTo(args[0], args[1]);
+            }
+            else if (type === "L") {
+                context.lineTo(args[0], args[1]);
+            }
+            else if (type === "C") {
+                context.bezierCurveTo(args[0], args[1], args[2], args[3], args[4], args[5]);
+                lastControlPoint = [args[2], args[3]];
+            }
+            else if (type === "Q") {
+                context.quadraticCurveTo(args[0], args[1], args[2], args[3]);
+                lastControlPoint = [args[0], args[1]];
+            }
+            else if (type === "A") {
+                // no need A
+            }
+            else if (type === "Z") {
+                context.closePath();
+            }
+        });
+        context.fill();
+        context.restore();
     }
     computeJustifySpacing(text, lineWidth, justifyWidth) {
         let count = 0;

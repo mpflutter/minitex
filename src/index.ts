@@ -9,9 +9,14 @@ import { LogLevel, logger } from "./logger";
 // import { logger } from "./logger";
 
 export class MiniTex {
-  static install(canvasKit: any, pixelRatio: number, embeddingFonts: string[]) {
+  static install(
+    canvasKit: any,
+    pixelRatio: number,
+    embeddingFonts: string[],
+    iconFonts?: Record<string, string>
+  ) {
     // logger.profileMode = true;
-    logger.setLogLevel(LogLevel.ERROR);
+    logger.setLogLevel(LogLevel.DEBUG);
     Drawer.pixelRatio = pixelRatio;
     const originMakeFromFontCollectionMethod =
       canvasKit.ParagraphBuilder.MakeFromFontCollection;
@@ -23,7 +28,8 @@ export class MiniTex {
         originMakeFromFontCollectionMethod,
         style,
         fontCollection,
-        embeddingFonts
+        embeddingFonts,
+        iconFonts
       );
     };
     const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;

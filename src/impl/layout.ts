@@ -196,7 +196,15 @@ export class TextLayout {
         TextLayout.sharedLayoutContext.font = span.toCanvasFont();
         const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
 
-        if (!matrics.fontBoundingBoxAscent) {
+        let iconFontWidth = 0;
+        if (this.paragraph.iconFontData) {
+          const fontSize = span.style.fontSize ?? 14;
+          iconFontWidth = fontSize;
+          currentLineMetrics.ascent = fontSize;
+          currentLineMetrics.descent = 0;
+          span.letterBaseline = fontSize;
+          span.letterHeight = fontSize;
+        } else if (!matrics.fontBoundingBoxAscent) {
           const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
           currentLineMetrics.ascent = mHeight * 1.15;
           currentLineMetrics.descent = mHeight * 0.35;
@@ -227,7 +235,11 @@ export class TextLayout {
           currentLineMetrics.ascent
         );
 
-        if (
+        if (this.paragraph.iconFontData) {
+          const textWidth = span.text.length * iconFontWidth;
+          currentLineMetrics.endIndex += span.text.length;
+          currentLineMetrics.width += textWidth;
+        } else if (
           currentLineMetrics.width + matrics.width < layoutWidth &&
           !span.hasLetterSpacing() &&
           !span.hasWordSpacing() &&

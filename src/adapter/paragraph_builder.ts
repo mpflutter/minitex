@@ -25,12 +25,16 @@ export class ParagraphBuilder extends SkEmbindObject {
     ) => any,
     style: ParagraphStyle,
     fontCollection: any,
-    embeddingFonts: string[]
+    embeddingFonts: string[],
+    iconFonts?: Record<string, string>
   ) {
     const fontFamilies = style.textStyle?.fontFamilies;
     if (fontFamilies && fontFamilies[0] === "MiniTex") {
       logger.info("use minitex paragraph builder.", fontFamilies);
       return new ParagraphBuilder(style);
+    } else if (fontFamilies && iconFonts && iconFonts[fontFamilies[0]]) {
+      logger.info("use fontPaths paragraph builder.", fontFamilies);
+      return new ParagraphBuilder(style, iconFonts[fontFamilies[0]]);
     } else {
       if (fontFamilies) {
         if (
@@ -47,7 +51,7 @@ export class ParagraphBuilder extends SkEmbindObject {
     }
   }
 
-  constructor(readonly style: ParagraphStyle) {
+  constructor(readonly style: ParagraphStyle, readonly iconFontData?: string) {
     super();
   }
 
@@ -92,7 +96,7 @@ export class ParagraphBuilder extends SkEmbindObject {
    * Canvas.
    */
   build(): Paragraph {
-    return new Paragraph(this.spans, this.style);
+    return new Paragraph(this.spans, this.style, this.iconFontData);
   }
 
   /**

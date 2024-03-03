@@ -40,13 +40,17 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
 };
 exports.drawParagraph = drawParagraph;
 class Paragraph extends skia_1.SkEmbindObject {
-    constructor(spans, paragraphStyle) {
+    constructor(spans, paragraphStyle, iconFontData) {
         super();
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
+        this.iconFontData = iconFontData;
         this._type = "SkParagraph";
         this.isMiniTex = true;
         this._textLayout = new layout_1.TextLayout(this);
+        if (this.iconFontData) {
+            this.iconFontMap = JSON.parse(this.iconFontData);
+        }
     }
     delete() {
         if (this.skImageCache) {

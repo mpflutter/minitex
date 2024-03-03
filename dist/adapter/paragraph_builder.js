@@ -9,12 +9,16 @@ const logger_1 = require("../logger");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.SkEmbindObject {
-    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts) {
+    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts, iconFonts) {
         var _a;
         const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
         if (fontFamilies && fontFamilies[0] === "MiniTex") {
             logger_1.logger.info("use minitex paragraph builder.", fontFamilies);
             return new ParagraphBuilder(style);
+        }
+        else if (fontFamilies && iconFonts && iconFonts[fontFamilies[0]]) {
+            logger_1.logger.info("use fontPaths paragraph builder.", fontFamilies);
+            return new ParagraphBuilder(style, iconFonts[fontFamilies[0]]);
         }
         else {
             if (fontFamilies) {
@@ -29,9 +33,10 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
             return originMakeFromFontCollectionMethod(style, fontCollection);
         }
     }
-    constructor(style) {
+    constructor(style, iconFontData) {
         super();
         this.style = style;
+        this.iconFontData = iconFontData;
         this.isMiniTex = true;
         this.spans = [];
         this.styles = [];
@@ -64,7 +69,7 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
      * Canvas.
      */
     build() {
-        return new paragraph_1.Paragraph(this.spans, this.style);
+        return new paragraph_1.Paragraph(this.spans, this.style, this.iconFontData);
     }
     /**
      * @param words is an array of word edges (starting or ending). You can
