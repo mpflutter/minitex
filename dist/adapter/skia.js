@@ -3,7 +3,7 @@
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.TextBaseline = exports.StrokeJoin = exports.StrokeCap = exports.PlaceholderAlignment = exports.SkEmbindObject = void 0;
+exports.TextHeightBehavior = exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.TextBaseline = exports.StrokeJoin = exports.StrokeCap = exports.PlaceholderAlignment = exports.SkEmbindObject = void 0;
 class SkEmbindObject {
     constructor() {
         this._type = "";
@@ -126,3 +126,10 @@ var DecorationStyle;
     DecorationStyle[DecorationStyle["Dashed"] = 3] = "Dashed";
     DecorationStyle[DecorationStyle["Wavy"] = 4] = "Wavy";
 })(DecorationStyle || (exports.DecorationStyle = DecorationStyle = {}));
+var TextHeightBehavior;
+(function (TextHeightBehavior) {
+    TextHeightBehavior[TextHeightBehavior["All"] = 0] = "All";
+    TextHeightBehavior[TextHeightBehavior["DisableFirstAscent"] = 1] = "DisableFirstAscent";
+    TextHeightBehavior[TextHeightBehavior["DisableLastDescent"] = 2] = "DisableLastDescent";
+    TextHeightBehavior[TextHeightBehavior["DisableAll"] = 3] = "DisableAll";
+})(TextHeightBehavior || (exports.TextHeightBehavior = TextHeightBehavior = {}));

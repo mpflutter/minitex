@@ -6,6 +6,7 @@ import { Drawer } from "./impl/drawer";
 import { drawParagraph } from "./adapter/paragraph";
 import { ParagraphBuilder } from "./adapter/paragraph_builder";
 import { LogLevel, logger } from "./logger";
+import { installPolyfill } from "./polyfill";
 // import { logger } from "./logger";
 
 export class MiniTex {
@@ -15,6 +16,9 @@ export class MiniTex {
     embeddingFonts: string[],
     iconFonts?: Record<string, string>
   ) {
+    if (typeof canvasKit.ParagraphBuilder === "undefined") {
+      installPolyfill(canvasKit);
+    }
     // logger.profileMode = true;
     logger.setLogLevel(LogLevel.DEBUG);
     Drawer.pixelRatio = pixelRatio;

@@ -205,7 +205,7 @@ export interface ParagraphStyle {
   strutStyle?: StrutStyle;
   textAlign?: SkEnum<TextAlign>;
   textDirection?: SkEnum<TextDirection>;
-  // textHeightBehavior?: TextHeightBehavior;
+  // textHeightBehavior?,
   textStyle?: TextStyle;
   // applyRoundingHack?: boolean;
 }
@@ -314,6 +314,13 @@ export enum DecorationStyle {
   Dotted,
   Dashed,
   Wavy,
+}
+
+export enum TextHeightBehavior {
+  All,
+  DisableFirstAscent,
+  DisableLastDescent,
+  DisableAll,
 }
 
 export interface TextFontFeatures {
