@@ -137,12 +137,10 @@ class Drawer {
                     }
                     context.fillStyle = span.toTextFillStyle();
                     if (this.paragraph.iconFontData) {
-                        for (let index = 0; index < currentDrawText.length; index++) {
-                            const currentDrawLetter = currentDrawText[index];
-                            const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
-                            this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
-                            drawingLeft += letterWidth;
-                        }
+                        const currentDrawLetter = String.fromCodePoint(currentDrawText.codePointAt(0));
+                        const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
+                        this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                        drawingLeft += letterWidth;
                     }
                     else if (span.hasLetterSpacing() ||
                         span.hasWordSpacing() ||
@@ -196,13 +194,15 @@ class Drawer {
     }
     fillIcon(context, text, fontSize, x, y) {
         var _a;
-        context.save();
         const svgPath = (_a = this.paragraph.iconFontMap) === null || _a === void 0 ? void 0 : _a[text];
-        if (!svgPath)
+        if (!svgPath) {
+            console.log("fill icon not found", text.charCodeAt(0).toString(16));
             return;
+        }
         const pathCommands = svgPath.match(/[A-Za-z]\d+([\.\d,]+)?/g);
         if (!pathCommands)
             return;
+        context.save();
         context.beginPath();
         let lastControlPoint = null;
         pathCommands.forEach((command) => {

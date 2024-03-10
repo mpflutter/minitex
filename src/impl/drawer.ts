@@ -201,18 +201,18 @@ export class Drawer {
           }
           context.fillStyle = span.toTextFillStyle();
           if (this.paragraph.iconFontData) {
-            for (let index = 0; index < currentDrawText.length; index++) {
-              const currentDrawLetter = currentDrawText[index];
-              const letterWidth = span.style.fontSize ?? 14;
-              this.fillIcon(
-                context,
-                currentDrawLetter,
-                letterWidth,
-                drawingLeft,
-                textBaseline + currentDrawLine.yOffset
-              );
-              drawingLeft += letterWidth;
-            }
+            const currentDrawLetter = String.fromCodePoint(
+              currentDrawText.codePointAt(0)!
+            );
+            const letterWidth = span.style.fontSize ?? 14;
+            this.fillIcon(
+              context,
+              currentDrawLetter,
+              letterWidth,
+              drawingLeft,
+              textBaseline + currentDrawLine.yOffset
+            );
+            drawingLeft += letterWidth;
           } else if (
             span.hasLetterSpacing() ||
             span.hasWordSpacing() ||
@@ -296,11 +296,14 @@ export class Drawer {
     x: number,
     y: number
   ) {
-    context.save();
     const svgPath = this.paragraph.iconFontMap?.[text];
-    if (!svgPath) return;
+    if (!svgPath) {
+      console.log("fill icon not found", text.charCodeAt(0).toString(16));
+      return;
+    }
     const pathCommands = svgPath.match(/[A-Za-z]\d+([\.\d,]+)?/g);
     if (!pathCommands) return;
+    context.save();
     context.beginPath();
     let lastControlPoint = null;
     pathCommands.forEach((command) => {
