@@ -153,19 +153,12 @@ class TextLayout {
                     span.letterBaseline = fontSize;
                     span.letterHeight = fontSize;
                 }
-                else if (!matrics.fontBoundingBoxAscent) {
+                else {
                     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
                     currentLineMetrics.ascent = mHeight * 1.15;
                     currentLineMetrics.descent = mHeight * 0.35;
                     span.letterBaseline = mHeight * 1.15;
                     span.letterHeight = mHeight * 1.15 + mHeight * 0.35;
-                }
-                else {
-                    currentLineMetrics.ascent = matrics.fontBoundingBoxAscent;
-                    currentLineMetrics.descent = matrics.fontBoundingBoxDescent;
-                    span.letterBaseline = matrics.fontBoundingBoxAscent;
-                    span.letterHeight =
-                        matrics.fontBoundingBoxAscent + matrics.fontBoundingBoxDescent;
                 }
                 if (span.style.heightMultiplier && span.style.heightMultiplier > 0) {
                     currentLineMetrics.heightMultiplier = Math.max(currentLineMetrics.heightMultiplier, span.style.heightMultiplier / 1.5);
