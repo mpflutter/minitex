@@ -18,6 +18,7 @@ export class MiniTex {
   ) {
     if (typeof canvasKit.ParagraphBuilder === "undefined") {
       installPolyfill(canvasKit);
+      ParagraphBuilder.usingPolyfill = true;
     }
     // logger.profileMode = true;
     logger.setLogLevel(LogLevel.DEBUG);

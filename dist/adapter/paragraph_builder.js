@@ -20,6 +20,10 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
             logger_1.logger.info("use fontPaths paragraph builder.", fontFamilies);
             return new ParagraphBuilder(style, iconFonts[fontFamilies[0]]);
         }
+        else if (ParagraphBuilder.usingPolyfill) {
+            logger_1.logger.info("usingPolyfill, so use minitex paragraph builder.", fontFamilies);
+            return new ParagraphBuilder(style);
+        }
         else {
             if (fontFamilies) {
                 if (fontFamilies.filter((it) => {
@@ -187,3 +191,4 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
     }
 }
 exports.ParagraphBuilder = ParagraphBuilder;
+ParagraphBuilder.usingPolyfill = false;

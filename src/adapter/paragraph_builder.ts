@@ -18,6 +18,8 @@ import {
 import { TextStyle } from "./skia";
 
 export class ParagraphBuilder extends SkEmbindObject {
+  static usingPolyfill = false;
+
   static MakeFromFontCollection(
     originMakeFromFontCollectionMethod: (
       style: ParagraphStyle,
@@ -35,6 +37,12 @@ export class ParagraphBuilder extends SkEmbindObject {
     } else if (fontFamilies && iconFonts && iconFonts[fontFamilies[0]]) {
       logger.info("use fontPaths paragraph builder.", fontFamilies);
       return new ParagraphBuilder(style, iconFonts[fontFamilies[0]]);
+    } else if (ParagraphBuilder.usingPolyfill) {
+      logger.info(
+        "usingPolyfill, so use minitex paragraph builder.",
+        fontFamilies
+      );
+      return new ParagraphBuilder(style);
     } else {
       if (fontFamilies) {
         if (

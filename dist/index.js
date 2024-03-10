@@ -14,6 +14,7 @@ class MiniTex {
     static install(canvasKit, pixelRatio, embeddingFonts, iconFonts) {
         if (typeof canvasKit.ParagraphBuilder === "undefined") {
             (0, polyfill_1.installPolyfill)(canvasKit);
+            paragraph_builder_1.ParagraphBuilder.usingPolyfill = true;
         }
         // logger.profileMode = true;
         logger_1.logger.setLogLevel(logger_1.LogLevel.DEBUG);
