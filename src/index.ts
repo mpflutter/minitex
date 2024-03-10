@@ -21,7 +21,7 @@ export class MiniTex {
       ParagraphBuilder.usingPolyfill = true;
     }
     // logger.profileMode = true;
-    logger.setLogLevel(LogLevel.DEBUG);
+    logger.setLogLevel(LogLevel.ERROR);
     Drawer.pixelRatio = pixelRatio;
     const originMakeFromFontCollectionMethod =
       canvasKit.ParagraphBuilder.MakeFromFontCollection;

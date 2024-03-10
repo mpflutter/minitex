@@ -41,13 +41,17 @@ const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
 };
 exports.drawParagraph = drawParagraph;
 class Paragraph extends skia_1.SkEmbindObject {
-    constructor(spans, paragraphStyle) {
+    constructor(spans, paragraphStyle, iconFontData) {
         super();
         this.spans = spans;
         this.paragraphStyle = paragraphStyle;
+        this.iconFontData = iconFontData;
         this._type = "SkParagraph";
         this.isMiniTex = true;
         this._textLayout = new layout_1.TextLayout(this);
+        if (this.iconFontData) {
+            this.iconFontMap = JSON.parse(this.iconFontData);
+        }
     }
     delete() {
         if (this.skImageCache) {
@@ -331,11 +335,19 @@ const logger_1 = require("../logger");
 const paragraph_1 = require("./paragraph");
 const skia_1 = require("./skia");
 class ParagraphBuilder extends skia_1.SkEmbindObject {
-    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts) {
+    static MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts, iconFonts) {
         var _a;
         const fontFamilies = (_a = style.textStyle) === null || _a === void 0 ? void 0 : _a.fontFamilies;
         if (fontFamilies && fontFamilies[0] === "MiniTex") {
             logger_1.logger.info("use minitex paragraph builder.", fontFamilies);
+            return new ParagraphBuilder(style);
+        }
+        else if (fontFamilies && iconFonts && iconFonts[fontFamilies[0]]) {
+            logger_1.logger.info("use fontPaths paragraph builder.", fontFamilies);
+            return new ParagraphBuilder(style, iconFonts[fontFamilies[0]]);
+        }
+        else if (ParagraphBuilder.usingPolyfill) {
+            logger_1.logger.info("usingPolyfill, so use minitex paragraph builder.", fontFamilies);
             return new ParagraphBuilder(style);
         }
         else {
@@ -351,9 +363,10 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
             return originMakeFromFontCollectionMethod(style, fontCollection);
         }
     }
-    constructor(style) {
+    constructor(style, iconFontData) {
         super();
         this.style = style;
+        this.iconFontData = iconFontData;
         this.isMiniTex = true;
         this.spans = [];
         this.styles = [];
@@ -386,7 +399,7 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
      * Canvas.
      */
     build() {
-        return new paragraph_1.Paragraph(this.spans, this.style);
+        return new paragraph_1.Paragraph(this.spans, this.style, this.iconFontData);
     }
     /**
      * @param words is an array of word edges (starting or ending). You can
@@ -504,6 +517,7 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
     }
 }
 exports.ParagraphBuilder = ParagraphBuilder;
+ParagraphBuilder.usingPolyfill = false;
 
 },{"../impl/span":6,"../logger":8,"./paragraph":1,"./skia":3}],3:[function(require,module,exports){
 "use strict";
@@ -511,7 +525,7 @@ exports.ParagraphBuilder = ParagraphBuilder;
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.TextBaseline = exports.StrokeJoin = exports.StrokeCap = exports.PlaceholderAlignment = exports.SkEmbindObject = void 0;
+exports.TextHeightBehavior = exports.DecorationStyle = exports.FontSlant = exports.FontWidth = exports.FontWeight = exports.LineThroughDecoration = exports.OverlineDecoration = exports.UnderlineDecoration = exports.NoDecoration = exports.TextAlign = exports.Affinity = exports.RectWidthStyle = exports.RectHeightStyle = exports.TextDirection = exports.TextBaseline = exports.StrokeJoin = exports.StrokeCap = exports.PlaceholderAlignment = exports.SkEmbindObject = void 0;
 class SkEmbindObject {
     constructor() {
         this._type = "";
@@ -634,6 +648,13 @@ var DecorationStyle;
     DecorationStyle[DecorationStyle["Dashed"] = 3] = "Dashed";
     DecorationStyle[DecorationStyle["Wavy"] = 4] = "Wavy";
 })(DecorationStyle || (exports.DecorationStyle = DecorationStyle = {}));
+var TextHeightBehavior;
+(function (TextHeightBehavior) {
+    TextHeightBehavior[TextHeightBehavior["All"] = 0] = "All";
+    TextHeightBehavior[TextHeightBehavior["DisableFirstAscent"] = 1] = "DisableFirstAscent";
+    TextHeightBehavior[TextHeightBehavior["DisableLastDescent"] = 2] = "DisableLastDescent";
+    TextHeightBehavior[TextHeightBehavior["DisableAll"] = 3] = "DisableAll";
+})(TextHeightBehavior || (exports.TextHeightBehavior = TextHeightBehavior = {}));
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -679,7 +700,7 @@ class Drawer {
             linesUndrawed[it.lineNumber] = it.endIndex - it.startIndex;
         });
         spans.forEach((span) => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             if (didExceedMaxLines)
                 return;
             if (span instanceof span_1.TextSpan) {
@@ -774,7 +795,15 @@ class Drawer {
                         context.shadowBlur = (_f = span.style.shadows[0].blurRadius) !== null && _f !== void 0 ? _f : 0;
                     }
                     context.fillStyle = span.toTextFillStyle();
-                    if (span.hasLetterSpacing() ||
+                    if (this.paragraph.iconFontData) {
+                        for (let index = 0; index < currentDrawText.length; index++) {
+                            const currentDrawLetter = currentDrawText[index];
+                            const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
+                            this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                            drawingLeft += letterWidth;
+                        }
+                    }
+                    else if (span.hasLetterSpacing() ||
                         span.hasWordSpacing() ||
                         span.hasJustifySpacing(this.paragraph.paragraphStyle)) {
                         const letterSpacing = span.hasLetterSpacing()
@@ -823,6 +852,54 @@ class Drawer {
         });
         context.restore();
         return context.getImageData(0, 0, width, height);
+    }
+    fillIcon(context, text, fontSize, x, y) {
+        var _a;
+        context.save();
+        const svgPath = (_a = this.paragraph.iconFontMap) === null || _a === void 0 ? void 0 : _a[text];
+        if (!svgPath)
+            return;
+        const pathCommands = svgPath.match(/[A-Za-z]\d+([\.\d,]+)?/g);
+        if (!pathCommands)
+            return;
+        context.beginPath();
+        let lastControlPoint = null;
+        pathCommands.forEach((command) => {
+            const type = command.charAt(0);
+            const args = command
+                .substring(1)
+                .split(",")
+                .map(parseFloat)
+                .map((it, index) => {
+                let value = it;
+                if (index % 2 === 1) {
+                    value = 150 - value + 150;
+                }
+                return value * (fontSize / 300);
+            });
+            if (type === "M") {
+                context.moveTo(args[0], args[1]);
+            }
+            else if (type === "L") {
+                context.lineTo(args[0], args[1]);
+            }
+            else if (type === "C") {
+                context.bezierCurveTo(args[0], args[1], args[2], args[3], args[4], args[5]);
+                lastControlPoint = [args[2], args[3]];
+            }
+            else if (type === "Q") {
+                context.quadraticCurveTo(args[0], args[1], args[2], args[3]);
+                lastControlPoint = [args[0], args[1]];
+            }
+            else if (type === "A") {
+                // no need A
+            }
+            else if (type === "Z") {
+                context.closePath();
+            }
+        });
+        context.fill();
+        context.restore();
     }
     computeJustifySpacing(text, lineWidth, justifyWidth) {
         let count = 0;
@@ -899,7 +976,7 @@ class Drawer {
 exports.Drawer = Drawer;
 Drawer.pixelRatio = 1.0;
 
-},{"../adapter/skia":3,"../logger":8,"../util":9,"./span":6}],5:[function(require,module,exports){
+},{"../adapter/skia":3,"../logger":8,"../util":11,"./span":6}],5:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1042,11 +1119,20 @@ class TextLayout {
         let lineMetrics = [];
         const spans = (0, span_1.spanWithNewline)(this.paragraph.spans);
         spans.forEach((span) => {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             if (span instanceof span_1.TextSpan) {
                 TextLayout.sharedLayoutContext.font = span.toCanvasFont();
                 const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
-                if (!matrics.fontBoundingBoxAscent) {
+                let iconFontWidth = 0;
+                if (this.paragraph.iconFontData) {
+                    const fontSize = (_a = span.style.fontSize) !== null && _a !== void 0 ? _a : 14;
+                    iconFontWidth = fontSize;
+                    currentLineMetrics.ascent = fontSize;
+                    currentLineMetrics.descent = 0;
+                    span.letterBaseline = fontSize;
+                    span.letterHeight = fontSize;
+                }
+                else if (!matrics.fontBoundingBoxAscent) {
                     const mHeight = TextLayout.sharedLayoutContext.measureText("M").width;
                     currentLineMetrics.ascent = mHeight * 1.15;
                     currentLineMetrics.descent = mHeight * 0.35;
@@ -1065,7 +1151,12 @@ class TextLayout {
                 }
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
-                if (currentLineMetrics.width + matrics.width < layoutWidth &&
+                if (this.paragraph.iconFontData) {
+                    const textWidth = span.text.length * iconFontWidth;
+                    currentLineMetrics.endIndex += span.text.length;
+                    currentLineMetrics.width += textWidth;
+                }
+                else if (currentLineMetrics.width + matrics.width < layoutWidth &&
                     !span.hasLetterSpacing() &&
                     !span.hasWordSpacing() &&
                     !forceCalcGlyphInfos) {
@@ -1078,7 +1169,7 @@ class TextLayout {
                     else {
                         currentLineMetrics.endIndex += span.text.length;
                         currentLineMetrics.width += matrics.width;
-                        if (((_b = (_a = span.style.fontStyle) === null || _a === void 0 ? void 0 : _a.slant) === null || _b === void 0 ? void 0 : _b.value) === skia_2.FontSlant.Italic) {
+                        if (((_c = (_b = span.style.fontStyle) === null || _b === void 0 ? void 0 : _b.slant) === null || _c === void 0 ? void 0 : _c.value) === skia_2.FontSlant.Italic) {
                             currentLineMetrics.width += 2;
                         }
                     }
@@ -1104,7 +1195,7 @@ class TextLayout {
                         currentWord += letter;
                         let currentLetterLeft = currentWordWidth;
                         let spanEnded = span.text[index + 1] === undefined;
-                        let nextWord = (_c = currentWord + span.text[index + 1]) !== null && _c !== void 0 ? _c : "";
+                        let nextWord = (_d = currentWord + span.text[index + 1]) !== null && _d !== void 0 ? _d : "";
                         if (advances[index + 1] === undefined) {
                             currentWordWidth += advances[index] - advances[index - 1];
                         }
@@ -1227,7 +1318,7 @@ class TextLayout {
 }
 exports.TextLayout = TextLayout;
 
-},{"../adapter/skia":3,"../logger":8,"../util":9,"./span":6}],6:[function(require,module,exports){
+},{"../adapter/skia":3,"../logger":8,"../util":11,"./span":6}],6:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1339,7 +1430,7 @@ const spanWithNewline = (spans) => {
 };
 exports.spanWithNewline = spanWithNewline;
 
-},{"../adapter/skia":3,"../util":9}],7:[function(require,module,exports){
+},{"../adapter/skia":3,"../util":11}],7:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1350,15 +1441,20 @@ const drawer_1 = require("./impl/drawer");
 const paragraph_1 = require("./adapter/paragraph");
 const paragraph_builder_1 = require("./adapter/paragraph_builder");
 const logger_1 = require("./logger");
+const polyfill_1 = require("./polyfill");
 // import { logger } from "./logger";
 class MiniTex {
-    static install(canvasKit, pixelRatio, embeddingFonts) {
+    static install(canvasKit, pixelRatio, embeddingFonts, iconFonts) {
+        if (typeof canvasKit.ParagraphBuilder === "undefined") {
+            (0, polyfill_1.installPolyfill)(canvasKit);
+            paragraph_builder_1.ParagraphBuilder.usingPolyfill = true;
+        }
         // logger.profileMode = true;
         logger_1.logger.setLogLevel(logger_1.LogLevel.ERROR);
         drawer_1.Drawer.pixelRatio = pixelRatio;
         const originMakeFromFontCollectionMethod = canvasKit.ParagraphBuilder.MakeFromFontCollection;
         canvasKit.ParagraphBuilder.MakeFromFontCollection = function (style, fontCollection) {
-            return paragraph_builder_1.ParagraphBuilder.MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts);
+            return paragraph_builder_1.ParagraphBuilder.MakeFromFontCollection(originMakeFromFontCollectionMethod, style, fontCollection, embeddingFonts, iconFonts);
         };
         const originDrawParagraphMethod = canvasKit.Canvas.prototype.drawParagraph;
         canvasKit.Canvas.prototype.drawParagraph = function (paragraph, dx, dy) {
@@ -1373,7 +1469,7 @@ class MiniTex {
 }
 exports.MiniTex = MiniTex;
 
-},{"./adapter/paragraph":1,"./adapter/paragraph_builder":2,"./impl/drawer":4,"./logger":8}],8:[function(require,module,exports){
+},{"./adapter/paragraph":1,"./adapter/paragraph_builder":2,"./impl/drawer":4,"./logger":8,"./polyfill":9}],8:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1423,6 +1519,310 @@ exports.Logger = Logger;
 exports.logger = new Logger(LogLevel.ERROR);
 
 },{}],9:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.installPolyfill = void 0;
+const skia_1 = require("./adapter/skia");
+const polyfill_types_1 = require("./polyfill.types");
+const installPolyfill = (canvasKit) => {
+    canvasKit.ParagraphBuilder = new _ParagraphBuilderFactory();
+    canvasKit.FontCollection = new _FontCollectionFactory();
+    canvasKit.FontMgr = new _FontMgrFactory();
+    canvasKit.Typeface = new _TypefaceFactory();
+    canvasKit.TypefaceFontProvider = new _TypefaceFontProviderFactory();
+    canvasKit.Font = _Font;
+    canvasKit.ParagraphStyle = (properties) => {
+        return new _ParagraphStyle(properties);
+    };
+    canvasKit.TextStyle = (properties) => {
+        return new _TextStyle(properties);
+    };
+    // Paragraph Enums
+    canvasKit.TextAlign = new polyfill_types_1.TextAlignEnumValues();
+    canvasKit.TextDirection = new polyfill_types_1.TextDirectionEnumValues();
+    canvasKit.TextBaseline = new polyfill_types_1.TextBaselineEnumValues();
+    canvasKit.RectHeightStyle = new polyfill_types_1.RectHeightStyleEnumValues();
+    canvasKit.RectWidthStyle = new polyfill_types_1.RectWidthStyleEnumValues();
+    canvasKit.Affinity = new polyfill_types_1.AffinityEnumValues();
+    canvasKit.FontWeight = new polyfill_types_1.FontWeightEnumValues();
+    canvasKit.FontWidth = new polyfill_types_1.FontWidthEnumValues();
+    canvasKit.FontSlant = new polyfill_types_1.FontSlantEnumValues();
+    canvasKit.DecorationStyle = new polyfill_types_1.DecorationStyleEnumValues();
+    canvasKit.TextHeightBehavior = new polyfill_types_1.TextHeightBehaviorEnumValues();
+    // Paragraph Constants
+    canvasKit.NoDecoration = 0;
+    canvasKit.UnderlineDecoration = 1;
+    canvasKit.OverlineDecoration = 2;
+    canvasKit.LineThroughDecoration = 3;
+};
+exports.installPolyfill = installPolyfill;
+class _ParagraphBuilderFactory {
+    Make(style, fontManager) {
+        return this.MakeFromFontCollection(style, {});
+    }
+    MakeFromFontCollection(style, fontCollection) {
+        throw new Error("Method not implemented.");
+    }
+    RequiresClientICU() {
+        return false;
+    }
+}
+class _ParagraphStyle extends skia_1.SkEmbindObject {
+    constructor(properties) {
+        super();
+        Object.assign(this, properties);
+    }
+}
+class _TextStyle extends skia_1.SkEmbindObject {
+    constructor(properties) {
+        super();
+        Object.assign(this, properties);
+    }
+}
+class _FontCollection extends skia_1.SkEmbindObject {
+    setDefaultFontManager(fontManager) { }
+    enableFontFallback() { }
+}
+class _FontCollectionFactory {
+    Make() {
+        return new _FontCollection();
+    }
+}
+class _FontMgr extends skia_1.SkEmbindObject {
+    countFamilies() {
+        return 0;
+    }
+    getFamilyName(index) {
+        return "";
+    }
+}
+class _FontMgrFactory {
+    FromData(...buffers) {
+        return new _FontMgr();
+    }
+}
+class _TypefaceFactory {
+    GetDefault() {
+        throw new Error("_TypefaceFactory GetDefault Method not implemented.");
+    }
+    MakeTypefaceFromData(fontData) {
+        throw new Error("_TypefaceFactory MakeTypefaceFromData Method not implemented.");
+    }
+    MakeFreeTypeFaceFromData(fontData) {
+        return new _Typeface();
+    }
+}
+class _TypefaceFontProvider extends skia_1.SkEmbindObject {
+    registerFont(bytes, family) { }
+    countFamilies() {
+        return 0;
+    }
+    getFamilyName(index) {
+        return "";
+    }
+}
+class _TypefaceFontProviderFactory {
+    Make() {
+        return new _TypefaceFontProvider();
+    }
+}
+class _Typeface extends skia_1.SkEmbindObject {
+    getGlyphIDs(str, numCodePoints, output) {
+        return new Uint16Array([]);
+    }
+}
+class _Font extends skia_1.SkEmbindObject {
+    constructor(face, size, scaleX, skewX) {
+        super();
+    }
+    getMetrics() {
+        throw new Error("getMetrics Method not implemented.");
+    }
+    getGlyphBounds(glyphs, paint, output) {
+        return new Float32Array([0, 0, 0, 0]);
+    }
+    getGlyphIDs(str, numCodePoints, output) {
+        return new Uint16Array([]);
+    }
+    getGlyphWidths(glyphs, paint, output) {
+        throw new Error("getGlyphWidths Method not implemented.");
+    }
+    getGlyphIntercepts(glyphs, positions, top, bottom) {
+        throw new Error("getGlyphIntercepts Method not implemented.");
+    }
+    getScaleX() {
+        throw new Error("getScaleX Method not implemented.");
+    }
+    getSize() {
+        throw new Error("getSize Method not implemented.");
+    }
+    getSkewX() {
+        throw new Error("getSkewX Method not implemented.");
+    }
+    isEmbolden() {
+        throw new Error("isEmbolden Method not implemented.");
+    }
+    getTypeface() {
+        throw new Error("getTypeface Method not implemented.");
+    }
+    setEdging(edging) {
+        throw new Error("setEdging Method not implemented.");
+    }
+    setEmbeddedBitmaps(embeddedBitmaps) {
+        throw new Error("setEmbeddedBitmaps Method not implemented.");
+    }
+    setHinting(hinting) {
+        throw new Error("setHinting Method not implemented.");
+    }
+    setLinearMetrics(linearMetrics) {
+        throw new Error("setLinearMetrics Method not implemented.");
+    }
+    setScaleX(sx) {
+        throw new Error("setScaleX Method not implemented.");
+    }
+    setSize(points) {
+        throw new Error("setSize Method not implemented.");
+    }
+    setSkewX(sx) {
+        throw new Error("setSkewX Method not implemented.");
+    }
+    setEmbolden(embolden) {
+        throw new Error("setEmbolden Method not implemented.");
+    }
+    setSubpixel(subpixel) {
+        throw new Error("setSubpixel Method not implemented.");
+    }
+    setTypeface(face) {
+        throw new Error("setTypeface Method not implemented.");
+    }
+}
+
+},{"./adapter/skia":3,"./polyfill.types":10}],10:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TextHeightBehaviorEnumValues = exports.DecorationStyleEnumValues = exports.FontSlantEnumValues = exports.FontWidthEnumValues = exports.FontWeightEnumValues = exports.AffinityEnumValues = exports.RectWidthStyleEnumValues = exports.RectHeightStyleEnumValues = exports.TextBaselineEnumValues = exports.TextDirectionEnumValues = exports.TextAlignEnumValues = exports.FontHinting = exports.FontEdging = void 0;
+var FontEdging;
+(function (FontEdging) {
+    FontEdging[FontEdging["Alias"] = 0] = "Alias";
+    FontEdging[FontEdging["AntiAlias"] = 1] = "AntiAlias";
+    FontEdging[FontEdging["SubpixelAntiAlias"] = 2] = "SubpixelAntiAlias";
+})(FontEdging || (exports.FontEdging = FontEdging = {}));
+var FontHinting;
+(function (FontHinting) {
+    FontHinting[FontHinting["None"] = 0] = "None";
+    FontHinting[FontHinting["Slight"] = 1] = "Slight";
+    FontHinting[FontHinting["Normal"] = 2] = "Normal";
+    FontHinting[FontHinting["Full"] = 3] = "Full";
+})(FontHinting || (exports.FontHinting = FontHinting = {}));
+class TextAlignEnumValues {
+    constructor() {
+        this.Left = { value: 0 };
+        this.Right = { value: 1 };
+        this.Center = { value: 2 };
+        this.Justify = { value: 3 };
+        this.Start = { value: 4 };
+        this.End = { value: 5 };
+    }
+}
+exports.TextAlignEnumValues = TextAlignEnumValues;
+class TextDirectionEnumValues {
+    constructor() {
+        this.RTL = { value: 0 };
+        this.LTR = { value: 1 };
+    }
+}
+exports.TextDirectionEnumValues = TextDirectionEnumValues;
+class TextBaselineEnumValues {
+    constructor() {
+        this.Alphabetic = { value: 0 };
+        this.Ideographic = { value: 1 };
+    }
+}
+exports.TextBaselineEnumValues = TextBaselineEnumValues;
+class RectHeightStyleEnumValues {
+    constructor() {
+        this.Tight = { value: 0 };
+        this.Max = { value: 1 };
+        this.IncludeLineSpacingMiddle = { value: 2 };
+        this.IncludeLineSpacingTop = { value: 3 };
+        this.IncludeLineSpacingBottom = { value: 4 };
+        this.Strut = { value: 5 };
+    }
+}
+exports.RectHeightStyleEnumValues = RectHeightStyleEnumValues;
+class RectWidthStyleEnumValues {
+    constructor() {
+        this.Tight = { value: 0 };
+        this.Max = { value: 1 };
+    }
+}
+exports.RectWidthStyleEnumValues = RectWidthStyleEnumValues;
+class AffinityEnumValues {
+    constructor() {
+        this.Upstream = { value: 0 };
+        this.Downstream = { value: 1 };
+    }
+}
+exports.AffinityEnumValues = AffinityEnumValues;
+class FontWeightEnumValues {
+    constructor() {
+        this.Invisible = { value: 0 };
+        this.Thin = { value: 100 };
+        this.ExtraLight = { value: 200 };
+        this.Light = { value: 300 };
+        this.Normal = { value: 400 };
+        this.Medium = { value: 500 };
+        this.SemiBold = { value: 600 };
+        this.Bold = { value: 700 };
+        this.ExtraBold = { value: 800 };
+        this.Black = { value: 900 };
+        this.ExtraBlack = { value: 1000 };
+    }
+}
+exports.FontWeightEnumValues = FontWeightEnumValues;
+class FontWidthEnumValues {
+    constructor() {
+        this.UltraCondensed = { value: 0 };
+        this.ExtraCondensed = { value: 1 };
+        this.Condensed = { value: 2 };
+        this.SemiCondensed = { value: 3 };
+        this.Normal = { value: 4 };
+        this.SemiExpanded = { value: 5 };
+        this.Expanded = { value: 6 };
+        this.ExtraExpanded = { value: 7 };
+        this.UltraExpanded = { value: 8 };
+    }
+}
+exports.FontWidthEnumValues = FontWidthEnumValues;
+class FontSlantEnumValues {
+    constructor() {
+        this.Upright = { value: 0 };
+        this.Italic = { value: 1 };
+        this.Oblique = { value: 2 };
+    }
+}
+exports.FontSlantEnumValues = FontSlantEnumValues;
+class DecorationStyleEnumValues {
+    constructor() {
+        this.Solid = { value: 0 };
+        this.Double = { value: 1 };
+        this.Dotted = { value: 2 };
+        this.Dashed = { value: 3 };
+        this.Wavy = { value: 4 };
+    }
+}
+exports.DecorationStyleEnumValues = DecorationStyleEnumValues;
+class TextHeightBehaviorEnumValues {
+    constructor() {
+        this.All = { value: 0 };
+        this.DisableFirstAscent = { value: 1 };
+        this.DisableLastDescent = { value: 2 };
+        this.DisableAll = { value: 3 };
+    }
+}
+exports.TextHeightBehaviorEnumValues = TextHeightBehaviorEnumValues;
+
+},{}],11:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
