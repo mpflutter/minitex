@@ -85,7 +85,7 @@ class _ParagraphBuilderFactory implements ParagraphBuilderFactory {
     style: ParagraphStyle,
     fontCollection: FontCollection
   ): ParagraphBuilder {
-    throw new Error("Method not implemented.");
+    throw new Error("MakeFromFontCollection not implemented.");
   }
   RequiresClientICU(): boolean {
     return false;
@@ -166,12 +166,10 @@ class _FontMgrFactory implements FontMgrFactory {
 
 class _TypefaceFactory implements TypefaceFactory {
   GetDefault(): Typeface | null {
-    throw new Error("_TypefaceFactory GetDefault Method not implemented.");
+    return new _Typeface();
   }
   MakeTypefaceFromData(fontData: ArrayBuffer): Typeface | null {
-    throw new Error(
-      "_TypefaceFactory MakeTypefaceFromData Method not implemented."
-    );
+    return new _Typeface();
   }
   MakeFreeTypeFaceFromData(fontData: ArrayBuffer): Typeface | null {
     return new _Typeface();
@@ -218,7 +216,7 @@ class _Font extends SkEmbindObject implements Font {
   }
 
   getMetrics(): FontMetrics {
-    throw new Error("getMetrics Method not implemented.");
+    return { ascent: 0, descent: 0, leading: 0 };
   }
   getGlyphBounds(
     glyphs: InputGlyphIDArray,
@@ -239,7 +237,7 @@ class _Font extends SkEmbindObject implements Font {
     paint?: Paint | null | undefined,
     output?: Float32Array | undefined
   ): Float32Array {
-    throw new Error("getGlyphWidths Method not implemented.");
+    return new Float32Array([]);
   }
   getGlyphIntercepts(
     glyphs: InputGlyphIDArray,
@@ -247,51 +245,31 @@ class _Font extends SkEmbindObject implements Font {
     top: number,
     bottom: number
   ): Float32Array {
-    throw new Error("getGlyphIntercepts Method not implemented.");
+    return new Float32Array([]);
   }
   getScaleX(): number {
-    throw new Error("getScaleX Method not implemented.");
+    return 1;
   }
   getSize(): number {
-    throw new Error("getSize Method not implemented.");
+    return 0;
   }
   getSkewX(): number {
-    throw new Error("getSkewX Method not implemented.");
+    return 1;
   }
   isEmbolden(): boolean {
-    throw new Error("isEmbolden Method not implemented.");
+    return false;
   }
   getTypeface(): Typeface | null {
-    throw new Error("getTypeface Method not implemented.");
+    return new _Typeface();
   }
-  setEdging(edging: FontEdging): void {
-    throw new Error("setEdging Method not implemented.");
-  }
-  setEmbeddedBitmaps(embeddedBitmaps: boolean): void {
-    throw new Error("setEmbeddedBitmaps Method not implemented.");
-  }
-  setHinting(hinting: FontHinting): void {
-    throw new Error("setHinting Method not implemented.");
-  }
-  setLinearMetrics(linearMetrics: boolean): void {
-    throw new Error("setLinearMetrics Method not implemented.");
-  }
-  setScaleX(sx: number): void {
-    throw new Error("setScaleX Method not implemented.");
-  }
-  setSize(points: number): void {
-    throw new Error("setSize Method not implemented.");
-  }
-  setSkewX(sx: number): void {
-    throw new Error("setSkewX Method not implemented.");
-  }
-  setEmbolden(embolden: boolean): void {
-    throw new Error("setEmbolden Method not implemented.");
-  }
-  setSubpixel(subpixel: boolean): void {
-    throw new Error("setSubpixel Method not implemented.");
-  }
-  setTypeface(face: Typeface | null): void {
-    throw new Error("setTypeface Method not implemented.");
-  }
+  setEdging(edging: FontEdging): void {}
+  setEmbeddedBitmaps(embeddedBitmaps: boolean): void {}
+  setHinting(hinting: FontHinting): void {}
+  setLinearMetrics(linearMetrics: boolean): void {}
+  setScaleX(sx: number): void {}
+  setSize(points: number): void {}
+  setSkewX(sx: number): void {}
+  setEmbolden(embolden: boolean): void {}
+  setSubpixel(subpixel: boolean): void {}
+  setTypeface(face: Typeface | null): void {}
 }
