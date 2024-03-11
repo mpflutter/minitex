@@ -49,18 +49,18 @@ class Drawer {
                     spanLetterStartIndex++;
                     return;
                 }
-                let spanUndrawLength = span.text.length;
-                let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
+                let spanUndrawLength = span.charSequence.length;
+                let spanLetterEndIndex = spanLetterStartIndex + span.charSequence.length;
                 const lineMetrics = this.paragraph.getLineMetricsOfRange(spanLetterStartIndex, spanLetterEndIndex);
                 context.font = span.toCanvasFont();
                 while (spanUndrawLength > 0) {
-                    let currentDrawText = "";
+                    let currentDrawText = [];
                     let currentDrawLine;
                     for (let index = 0; index < lineMetrics.length; index++) {
                         const line = lineMetrics[index];
                         if (linesUndrawed[line.lineNumber] > 0) {
                             const currentDrawLength = Math.min(linesUndrawed[line.lineNumber], spanUndrawLength);
-                            currentDrawText = span.text.substring(span.text.length - spanUndrawLength, span.text.length - spanUndrawLength + currentDrawLength);
+                            currentDrawText = span.charSequence.slice(span.charSequence.length - spanUndrawLength, span.charSequence.length - spanUndrawLength + currentDrawLength);
                             spanUndrawLength -= currentDrawLength;
                             linesUndrawed[line.lineNumber] -= currentDrawLength;
                             currentDrawLine = line;
@@ -76,8 +76,8 @@ class Drawer {
                         const trimLength = (0, util_1.isSquareCharacter)(currentDrawText[currentDrawText.length - 1])
                             ? 1
                             : 3;
-                        currentDrawText =
-                            (_a = currentDrawText.substring(0, currentDrawText.length - trimLength) + this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "...";
+                        currentDrawText = currentDrawText.slice(0, currentDrawText.length - trimLength);
+                        currentDrawText.push(...Array.from((_a = this.paragraph.paragraphStyle.ellipsis) !== null && _a !== void 0 ? _a : "..."));
                         didExceedMaxLines = true;
                     }
                     let drawingLeft = (() => {
@@ -105,13 +105,14 @@ class Drawer {
                     })();
                     const drawingRight = drawingLeft +
                         (() => {
-                            if (currentDrawText === "\n") {
+                            if (currentDrawText.length === 1 && currentDrawText[0] === "\n") {
                                 return 0;
                             }
                             const extraLetterSpacing = span.hasLetterSpacing()
                                 ? currentDrawText.length * span.style.letterSpacing
                                 : 0;
-                            return (context.measureText(currentDrawText).width + extraLetterSpacing);
+                            return (context.measureText(currentDrawText.join("")).width +
+                                extraLetterSpacing);
                         })();
                     linesDrawingRightBounds[currentDrawLine.lineNumber] = drawingRight;
                     const textTop = currentDrawLine.baseline * currentDrawLine.heightMultiplier -
@@ -137,10 +138,12 @@ class Drawer {
                     }
                     context.fillStyle = span.toTextFillStyle();
                     if (this.paragraph.iconFontData) {
-                        const currentDrawLetter = String.fromCodePoint(currentDrawText.codePointAt(0));
-                        const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
-                        this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
-                        drawingLeft += letterWidth;
+                        for (let index = 0; index < currentDrawText.length; index++) {
+                            const currentDrawLetter = currentDrawText[index];
+                            const letterWidth = (_g = span.style.fontSize) !== null && _g !== void 0 ? _g : 14;
+                            this.fillIcon(context, currentDrawLetter, letterWidth, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                            drawingLeft += letterWidth;
+                        }
                     }
                     else if (span.hasLetterSpacing() ||
                         span.hasWordSpacing() ||
@@ -170,7 +173,7 @@ class Drawer {
                         }
                     }
                     else {
-                        context.fillText(currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);
+                        context.fillText(currentDrawText.join(""), drawingLeft, textBaseline + currentDrawLine.yOffset);
                     }
                     context.restore();
                     logger_1.logger.debug("Drawer.draw.fillText", currentDrawText, drawingLeft, textBaseline + currentDrawLine.yOffset);

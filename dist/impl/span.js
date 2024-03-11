@@ -19,6 +19,8 @@ class TextSpan extends Span {
         super();
         this.text = text;
         this.style = style;
+        this.charSequence = Array.from(text);
+        this.originText = text;
     }
     hasLetterSpacing() {
         return (this.style.letterSpacing !== undefined && this.style.letterSpacing > 1);
@@ -91,8 +93,8 @@ const spanWithNewline = (spans) => {
     let result = [];
     spans.forEach((span) => {
         if (span instanceof TextSpan) {
-            if (span.text.indexOf("\n") >= 0) {
-                const components = span.text.split("\n");
+            if (span.originText.indexOf("\n") >= 0) {
+                const components = span.originText.split("\n");
                 for (let index = 0; index < components.length; index++) {
                     const component = components[index];
                     if (index > 0) {

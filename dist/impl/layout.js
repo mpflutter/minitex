@@ -13,8 +13,8 @@ class LetterMeasurer {
     static measureLetters(span, context) {
         let advances = [0];
         let curPosWidth = 0;
-        for (let index = 0; index < span.text.length; index++) {
-            const letter = span.text[index];
+        for (let index = 0; index < span.charSequence.length; index++) {
+            const letter = span.charSequence[index];
             let wordWidth = (() => {
                 if ((0, util_1.isSquareCharacter)(letter)) {
                     return this.measureSquareCharacter(context);
@@ -25,7 +25,7 @@ class LetterMeasurer {
             })();
             if (span.hasWordSpacing() &&
                 letter === " " &&
-                (0, util_1.isEnglishWord)(span.text[index - 1])) {
+                (0, util_1.isEnglishWord)(span.charSequence[index - 1])) {
                 wordWidth = span.style.wordSpacing;
             }
             else if (span.hasLetterSpacing()) {
@@ -143,7 +143,7 @@ class TextLayout {
             var _a, _b, _c, _d;
             if (span instanceof span_1.TextSpan) {
                 TextLayout.sharedLayoutContext.font = span.toCanvasFont();
-                const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
+                const matrics = TextLayout.sharedLayoutContext.measureText(span.originText);
                 let iconFontWidth = 0;
                 if (this.paragraph.iconFontData) {
                     const fontSize = (_a = span.style.fontSize) !== null && _a !== void 0 ? _a : 14;
@@ -166,8 +166,8 @@ class TextLayout {
                 currentLineMetrics.height = Math.max(currentLineMetrics.height, currentLineMetrics.ascent + currentLineMetrics.descent);
                 currentLineMetrics.baseline = Math.max(currentLineMetrics.baseline, currentLineMetrics.ascent);
                 if (this.paragraph.iconFontData) {
-                    const textWidth = span.text.length * iconFontWidth;
-                    currentLineMetrics.endIndex += span.text.length;
+                    const textWidth = span.charSequence.length * iconFontWidth;
+                    currentLineMetrics.endIndex += span.charSequence.length;
                     currentLineMetrics.width += textWidth;
                 }
                 else if (currentLineMetrics.width + matrics.width < layoutWidth &&
@@ -181,7 +181,7 @@ class TextLayout {
                         currentLineMetrics = newLineMatrics;
                     }
                     else {
-                        currentLineMetrics.endIndex += span.text.length;
+                        currentLineMetrics.endIndex += span.charSequence.length;
                         currentLineMetrics.width += matrics.width;
                         if (((_c = (_b = span.style.fontStyle) === null || _b === void 0 ? void 0 : _b.slant) === null || _c === void 0 ? void 0 : _c.value) === skia_2.FontSlant.Italic) {
                             currentLineMetrics.width += 2;
@@ -204,12 +204,12 @@ class TextLayout {
                     let nextWordWidth = 0;
                     let canBreak = true;
                     let forceBreak = false;
-                    for (let index = 0; index < span.text.length; index++) {
-                        const letter = span.text[index];
+                    for (let index = 0; index < span.charSequence.length; index++) {
+                        const letter = span.charSequence[index];
                         currentWord += letter;
                         let currentLetterLeft = currentWordWidth;
-                        let spanEnded = span.text[index + 1] === undefined;
-                        let nextWord = (_d = currentWord + span.text[index + 1]) !== null && _d !== void 0 ? _d : "";
+                        let spanEnded = span.charSequence[index + 1] === undefined;
+                        let nextWord = (_d = currentWord + span.charSequence[index + 1]) !== null && _d !== void 0 ? _d : "";
                         if (advances[index + 1] === undefined) {
                             currentWordWidth += advances[index] - advances[index - 1];
                         }

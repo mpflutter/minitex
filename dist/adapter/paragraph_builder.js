@@ -143,7 +143,7 @@ class ParagraphBuilder extends skia_1.SkEmbindObject {
         let text = "";
         this.spans.forEach((it) => {
             if (it instanceof span_1.TextSpan) {
-                text += it.text;
+                text += it.originText;
             }
         });
         if (typeof window === "object" && window.TextEncoder) {

@@ -272,7 +272,7 @@ class Paragraph extends skia_1.SkEmbindObject {
             const lastLine = this._textLayout.lineMetrics[this._textLayout.lineMetrics.length - 1];
             if (end > lastLine.endIndex &&
                 lastSpan instanceof span_1.TextSpan &&
-                lastSpan.text.endsWith("\n")) {
+                lastSpan.originText.endsWith("\n")) {
                 return [
                     {
                         rect: new Float32Array([
