@@ -178,7 +178,7 @@ export class ParagraphBuilder extends SkEmbindObject {
     let text = "";
     this.spans.forEach((it) => {
       if (it instanceof TextSpan) {
-        text += it.text;
+        text += it.originText;
       }
     });
     if (typeof window === "object" && window.TextEncoder) {

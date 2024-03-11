@@ -18,8 +18,13 @@ export class Span {
 }
 
 export class TextSpan extends Span {
-  constructor(readonly text: string, readonly style: TextStyle) {
+  charSequence: string[];
+  originText: string;
+
+  constructor(private readonly text: string, readonly style: TextStyle) {
     super();
+    this.charSequence = Array.from(text);
+    this.originText = text;
   }
 
   hasLetterSpacing() {
@@ -95,8 +100,8 @@ export const spanWithNewline = (spans: Span[]): Span[] => {
   let result: Span[] = [];
   spans.forEach((span) => {
     if (span instanceof TextSpan) {
-      if (span.text.indexOf("\n") >= 0) {
-        const components = span.text.split("\n");
+      if (span.originText.indexOf("\n") >= 0) {
+        const components = span.originText.split("\n");
         for (let index = 0; index < components.length; index++) {
           const component = components[index];
           if (index > 0) {

@@ -40,8 +40,8 @@ class LetterMeasurer {
   ): { advances: number[] } {
     let advances: number[] = [0];
     let curPosWidth = 0;
-    for (let index = 0; index < span.text.length; index++) {
-      const letter = span.text[index];
+    for (let index = 0; index < span.charSequence.length; index++) {
+      const letter = span.charSequence[index];
       let wordWidth = (() => {
         if (isSquareCharacter(letter)) {
           return this.measureSquareCharacter(context);
@@ -52,7 +52,7 @@ class LetterMeasurer {
       if (
         span.hasWordSpacing() &&
         letter === " " &&
-        isEnglishWord(span.text[index - 1])
+        isEnglishWord(span.charSequence[index - 1])
       ) {
         wordWidth = span.style.wordSpacing!;
       } else if (span.hasLetterSpacing()) {
@@ -194,7 +194,7 @@ export class TextLayout {
     spans.forEach((span) => {
       if (span instanceof TextSpan) {
         TextLayout.sharedLayoutContext.font = span.toCanvasFont();
-        const matrics = TextLayout.sharedLayoutContext.measureText(span.text);
+        const matrics = TextLayout.sharedLayoutContext.measureText(span.originText);
 
         let iconFontWidth = 0;
         if (this.paragraph.iconFontData) {
@@ -230,8 +230,8 @@ export class TextLayout {
         );
 
         if (this.paragraph.iconFontData) {
-          const textWidth = span.text.length * iconFontWidth;
-          currentLineMetrics.endIndex += span.text.length;
+          const textWidth = span.charSequence.length * iconFontWidth;
+          currentLineMetrics.endIndex += span.charSequence.length;
           currentLineMetrics.width += textWidth;
         } else if (
           currentLineMetrics.width + matrics.width < layoutWidth &&
@@ -246,7 +246,7 @@ export class TextLayout {
             lineMetrics.push(currentLineMetrics);
             currentLineMetrics = newLineMatrics;
           } else {
-            currentLineMetrics.endIndex += span.text.length;
+            currentLineMetrics.endIndex += span.charSequence.length;
             currentLineMetrics.width += matrics.width;
             if (span.style.fontStyle?.slant?.value === FontSlant.Italic) {
               currentLineMetrics.width += 2;
@@ -277,12 +277,12 @@ export class TextLayout {
           let canBreak = true;
           let forceBreak = false;
 
-          for (let index = 0; index < span.text.length; index++) {
-            const letter = span.text[index];
+          for (let index = 0; index < span.charSequence.length; index++) {
+            const letter = span.charSequence[index];
             currentWord += letter;
             let currentLetterLeft = currentWordWidth;
-            let spanEnded = span.text[index + 1] === undefined;
-            let nextWord = currentWord + span.text[index + 1] ?? "";
+            let spanEnded = span.charSequence[index + 1] === undefined;
+            let nextWord = currentWord + span.charSequence[index + 1] ?? "";
             if (advances[index + 1] === undefined) {
               currentWordWidth += advances[index] - advances[index - 1];
             } else {

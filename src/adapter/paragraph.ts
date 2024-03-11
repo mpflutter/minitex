@@ -344,7 +344,7 @@ export class Paragraph extends SkEmbindObject {
       if (
         end > lastLine.endIndex &&
         lastSpan instanceof TextSpan &&
-        lastSpan.text.endsWith("\n")
+        lastSpan.originText.endsWith("\n")
       ) {
         return [
           {

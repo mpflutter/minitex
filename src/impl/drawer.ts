@@ -81,8 +81,9 @@ export class Drawer {
           spanLetterStartIndex++;
           return;
         }
-        let spanUndrawLength = span.text.length;
-        let spanLetterEndIndex = spanLetterStartIndex + span.text.length;
+        let spanUndrawLength = span.charSequence.length;
+        let spanLetterEndIndex =
+          spanLetterStartIndex + span.charSequence.length;
         const lineMetrics = this.paragraph.getLineMetricsOfRange(
           spanLetterStartIndex,
           spanLetterEndIndex
@@ -91,7 +92,7 @@ export class Drawer {
         context.font = span.toCanvasFont();
 
         while (spanUndrawLength > 0) {
-          let currentDrawText = "";
+          let currentDrawText: string[] = [];
           let currentDrawLine: LineMetrics | undefined;
           for (let index = 0; index < lineMetrics.length; index++) {
             const line = lineMetrics[index];
@@ -100,9 +101,9 @@ export class Drawer {
                 linesUndrawed[line.lineNumber],
                 spanUndrawLength
               );
-              currentDrawText = span.text.substring(
-                span.text.length - spanUndrawLength,
-                span.text.length - spanUndrawLength + currentDrawLength
+              currentDrawText = span.charSequence.slice(
+                span.charSequence.length - spanUndrawLength,
+                span.charSequence.length - spanUndrawLength + currentDrawLength
               );
               spanUndrawLength -= currentDrawLength;
               linesUndrawed[line.lineNumber] -= currentDrawLength;
@@ -124,11 +125,13 @@ export class Drawer {
             )
               ? 1
               : 3;
-            currentDrawText =
-              currentDrawText.substring(
-                0,
-                currentDrawText.length - trimLength
-              ) + this.paragraph.paragraphStyle.ellipsis ?? "...";
+            currentDrawText = currentDrawText.slice(
+              0,
+              currentDrawText.length - trimLength
+            );
+            currentDrawText.push(
+              ...Array.from(this.paragraph.paragraphStyle.ellipsis ?? "...")
+            );
             didExceedMaxLines = true;
           }
 
@@ -161,14 +164,15 @@ export class Drawer {
           const drawingRight =
             drawingLeft +
             (() => {
-              if (currentDrawText === "\n") {
+              if (currentDrawText.length === 1 && currentDrawText[0] === "\n") {
                 return 0;
               }
               const extraLetterSpacing = span.hasLetterSpacing()
                 ? currentDrawText.length * span.style.letterSpacing!
                 : 0;
               return (
-                context.measureText(currentDrawText).width + extraLetterSpacing
+                context.measureText(currentDrawText.join("")).width +
+                extraLetterSpacing
               );
             })();
 
@@ -201,18 +205,18 @@ export class Drawer {
           }
           context.fillStyle = span.toTextFillStyle();
           if (this.paragraph.iconFontData) {
-            const currentDrawLetter = String.fromCodePoint(
-              currentDrawText.codePointAt(0)!
-            );
-            const letterWidth = span.style.fontSize ?? 14;
-            this.fillIcon(
-              context,
-              currentDrawLetter,
-              letterWidth,
-              drawingLeft,
-              textBaseline + currentDrawLine.yOffset
-            );
-            drawingLeft += letterWidth;
+            for (let index = 0; index < currentDrawText.length; index++) {
+              const currentDrawLetter = currentDrawText[index];
+              const letterWidth = span.style.fontSize ?? 14;
+              this.fillIcon(
+                context,
+                currentDrawLetter,
+                letterWidth,
+                drawingLeft,
+                textBaseline + currentDrawLine.yOffset
+              );
+              drawingLeft += letterWidth;
+            }
           } else if (
             span.hasLetterSpacing() ||
             span.hasWordSpacing() ||
@@ -253,7 +257,7 @@ export class Drawer {
             }
           } else {
             context.fillText(
-              currentDrawText,
+              currentDrawText.join(""),
               drawingLeft,
               textBaseline + currentDrawLine.yOffset
             );
@@ -347,7 +351,7 @@ export class Drawer {
   }
 
   private computeJustifySpacing(
-    text: string,
+    text: string[],
     lineWidth: number,
     justifyWidth: number
   ): number {
