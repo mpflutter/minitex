@@ -22,6 +22,8 @@ import {
   URange,
 } from "./skia";
 
+let drawParagraphSharedPaint: any;
+
 export const drawParagraph = function (
   CanvasKit: any,
   skCanvas: any,
@@ -33,9 +35,9 @@ export const drawParagraph = function (
   if (logger.profileMode) {
     drawStartTime = new Date().getTime();
   }
-  const drawer = new Drawer(paragraph);
   let canvasImg = paragraph.skImageCache;
   if (!canvasImg) {
+    const drawer = new Drawer(paragraph);
     const imageData = drawer.draw();
     canvasImg = CanvasKit.MakeImage(
       {
@@ -64,7 +66,8 @@ export const drawParagraph = function (
     paragraph.skImageWidth! / Drawer.pixelRatio,
     paragraph.skImageHeight! / Drawer.pixelRatio
   );
-  const skPaint = new CanvasKit.Paint();
+  const skPaint = drawParagraphSharedPaint ?? new CanvasKit.Paint();
+  drawParagraphSharedPaint = skPaint;
   skCanvas.drawImageRect(canvasImg, srcRect, dstRect, skPaint);
   if (logger.profileMode) {
     const drawCostTime = new Date().getTime() - drawStartTime;
