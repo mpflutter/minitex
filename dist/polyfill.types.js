@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextHeightBehaviorEnumValues = exports.DecorationStyleEnumValues = exports.FontSlantEnumValues = exports.FontWidthEnumValues = exports.FontWeightEnumValues = exports.AffinityEnumValues = exports.RectWidthStyleEnumValues = exports.RectHeightStyleEnumValues = exports.TextBaselineEnumValues = exports.TextDirectionEnumValues = exports.TextAlignEnumValues = exports.FontHinting = exports.FontEdging = void 0;
+exports.PlaceholderAlignmentEnumValues = exports.TextHeightBehaviorEnumValues = exports.DecorationStyleEnumValues = exports.FontSlantEnumValues = exports.FontWidthEnumValues = exports.FontWeightEnumValues = exports.AffinityEnumValues = exports.RectWidthStyleEnumValues = exports.RectHeightStyleEnumValues = exports.TextBaselineEnumValues = exports.TextDirectionEnumValues = exports.TextAlignEnumValues = exports.FontHinting = exports.FontEdging = void 0;
 var FontEdging;
 (function (FontEdging) {
     FontEdging[FontEdging["Alias"] = 0] = "Alias";
@@ -121,3 +121,14 @@ class TextHeightBehaviorEnumValues {
     }
 }
 exports.TextHeightBehaviorEnumValues = TextHeightBehaviorEnumValues;
+class PlaceholderAlignmentEnumValues {
+    constructor() {
+        this.Baseline = { value: 0 };
+        this.AboveBaseline = { value: 1 };
+        this.BelowBaseline = { value: 2 };
+        this.Top = { value: 3 };
+        this.Bottom = { value: 4 };
+        this.Middle = { value: 5 };
+    }
+}
+exports.PlaceholderAlignmentEnumValues = PlaceholderAlignmentEnumValues;

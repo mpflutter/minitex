@@ -28,6 +28,7 @@ const installPolyfill = (canvasKit) => {
     canvasKit.FontSlant = new polyfill_types_1.FontSlantEnumValues();
     canvasKit.DecorationStyle = new polyfill_types_1.DecorationStyleEnumValues();
     canvasKit.TextHeightBehavior = new polyfill_types_1.TextHeightBehaviorEnumValues();
+    canvasKit.PlaceholderAlignment = new polyfill_types_1.PlaceholderAlignmentEnumValues();
     // Paragraph Constants
     canvasKit.NoDecoration = 0;
     canvasKit.UnderlineDecoration = 1;

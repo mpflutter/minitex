@@ -43,6 +43,7 @@ import {
   FontSlantEnumValues,
   DecorationStyleEnumValues,
   TextHeightBehaviorEnumValues,
+  PlaceholderAlignmentEnumValues,
 } from "./polyfill.types";
 
 export const installPolyfill = (canvasKit: CanvasKit) => {
@@ -70,6 +71,7 @@ export const installPolyfill = (canvasKit: CanvasKit) => {
   canvasKit.FontSlant = new FontSlantEnumValues();
   canvasKit.DecorationStyle = new DecorationStyleEnumValues();
   canvasKit.TextHeightBehavior = new TextHeightBehaviorEnumValues();
+  canvasKit.PlaceholderAlignment = new PlaceholderAlignmentEnumValues();
   // Paragraph Constants
   canvasKit.NoDecoration = 0;
   canvasKit.UnderlineDecoration = 1;

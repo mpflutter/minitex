@@ -22,7 +22,7 @@ export interface CanvasKit {
   FontSlant: FontSlantEnumValues;
   FontWeight: FontWeightEnumValues;
   FontWidth: FontWidthEnumValues;
-  // PlaceholderAlignment: PlaceholderAlignmentEnumValues;
+  PlaceholderAlignment: PlaceholderAlignmentEnumValues;
   RectHeightStyle: RectHeightStyleEnumValues;
   RectWidthStyle: RectWidthStyleEnumValues;
   TextAlign: TextAlignEnumValues;
@@ -441,4 +441,13 @@ export class TextHeightBehaviorEnumValues {
   DisableFirstAscent = { value: 1 };
   DisableLastDescent = { value: 2 };
   DisableAll = { value: 3 };
+}
+
+export class PlaceholderAlignmentEnumValues {
+  Baseline = { value: 0 };
+  AboveBaseline = { value: 1 };
+  BelowBaseline = { value: 2 };
+  Top = { value: 3 };
+  Bottom = { value: 4 };
+  Middle = { value: 5 };
 }
