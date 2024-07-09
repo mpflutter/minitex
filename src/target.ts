@@ -1,0 +1,1 @@
+export const appTarget: string = "normal"

@@ -8,6 +8,7 @@ const drawer_1 = require("../impl/drawer");
 const layout_1 = require("../impl/layout");
 const span_1 = require("../impl/span");
 const logger_1 = require("../logger");
+const util_1 = require("../util");
 const skia_1 = require("./skia");
 let drawParagraphSharedPaint;
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
@@ -259,7 +260,7 @@ class Paragraph extends skia_1.SkEmbindObject {
                     }
                 }
                 result.push({
-                    rect: new Float32Array([
+                    rect: (0, util_1.makeFloat32Array)([
                         currentLineLeft,
                         currentLineTop,
                         currentLineLeft + currentLineWidth,
@@ -277,7 +278,7 @@ class Paragraph extends skia_1.SkEmbindObject {
                 lastSpan.originText.endsWith("\n")) {
                 return [
                     {
-                        rect: new Float32Array([
+                        rect: (0, util_1.makeFloat32Array)([
                             0,
                             lastLine.yOffset,
                             0,

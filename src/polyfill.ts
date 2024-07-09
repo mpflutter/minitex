@@ -45,6 +45,7 @@ import {
   TextHeightBehaviorEnumValues,
   PlaceholderAlignmentEnumValues,
 } from "./polyfill.types";
+import { makeFloat32Array, makeUint16Array } from "./util";
 
 export const installPolyfill = (canvasKit: CanvasKit) => {
   canvasKit.ParagraphBuilder = new _ParagraphBuilderFactory();
@@ -203,7 +204,7 @@ class _Typeface extends SkEmbindObject implements Typeface {
     numCodePoints?: number | undefined,
     output?: Uint16Array | undefined
   ): Uint16Array {
-    return new Uint16Array([]);
+    return makeUint16Array([]);
   }
 }
 
@@ -225,21 +226,21 @@ class _Font extends SkEmbindObject implements Font {
     paint?: Paint | null | undefined,
     output?: Float32Array | undefined
   ): Float32Array {
-    return new Float32Array([0, 0, 0, 0]);
+    return makeFloat32Array([0, 0, 0, 0]);
   }
   getGlyphIDs(
     str: string,
     numCodePoints?: number | undefined,
     output?: Uint16Array | undefined
   ): Uint16Array {
-    return new Uint16Array([]);
+    return makeUint16Array([]);
   }
   getGlyphWidths(
     glyphs: InputGlyphIDArray,
     paint?: Paint | null | undefined,
     output?: Float32Array | undefined
   ): Float32Array {
-    return new Float32Array([]);
+    return makeFloat32Array([]);
   }
   getGlyphIntercepts(
     glyphs: InputGlyphIDArray,
@@ -247,7 +248,7 @@ class _Font extends SkEmbindObject implements Font {
     top: number,
     bottom: number
   ): Float32Array {
-    return new Float32Array([]);
+    return makeFloat32Array([]);
   }
   getScaleX(): number {
     return 1;

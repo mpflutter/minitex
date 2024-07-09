@@ -3,7 +3,22 @@
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCanvas = exports.convertToUpwardToPixelRatio = exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.valueOfRectXYWH = exports.valueOfRGBAInt = exports.colorToHex = void 0;
+exports.createCanvas = exports.convertToUpwardToPixelRatio = exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.valueOfRectXYWH = exports.valueOfRGBAInt = exports.colorToHex = exports.makeUint16Array = exports.makeFloat32Array = void 0;
+const target_1 = require("./target");
+const makeFloat32Array = (arr) => {
+    if (target_1.appTarget === "wegame") {
+        return arr;
+    }
+    return new Float32Array(arr);
+};
+exports.makeFloat32Array = makeFloat32Array;
+const makeUint16Array = (arr) => {
+    if (target_1.appTarget === "wegame") {
+        return arr;
+    }
+    return new Uint16Array(arr);
+};
+exports.makeUint16Array = makeUint16Array;
 const colorToHex = (rgbaColor) => {
     const r = Math.round(rgbaColor[0] * 255).toString(16);
     const g = Math.round(rgbaColor[1] * 255).toString(16);
@@ -90,8 +105,16 @@ function convertToUpwardToPixelRatio(number, pixelRatio) {
 }
 exports.convertToUpwardToPixelRatio = convertToUpwardToPixelRatio;
 function createCanvas(width, height) {
-    if (typeof wx === "object" && typeof wx.createOffscreenCanvas === "function") {
+    if (typeof wx === "object" &&
+        typeof wx.createOffscreenCanvas === "function") {
         return wx.createOffscreenCanvas({
+            type: "2d",
+            width: width,
+            height: height,
+        });
+    }
+    else if (typeof wx === "object" && typeof wx.createCanvas === "function") {
+        return wx.createCanvas({
             type: "2d",
             width: width,
             height: height,

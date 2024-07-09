@@ -6,6 +6,7 @@ import { Drawer } from "../impl/drawer";
 import { TextLayout } from "../impl/layout";
 import { Span, TextSpan } from "../impl/span";
 import { logger } from "../logger";
+import { makeFloat32Array } from "../util";
 import {
   Affinity,
   SkEmbindObject,
@@ -330,7 +331,7 @@ export class Paragraph extends SkEmbindObject {
           }
         }
         result.push({
-          rect: new Float32Array([
+          rect: makeFloat32Array([
             currentLineLeft,
             currentLineTop,
             currentLineLeft + currentLineWidth,
@@ -351,7 +352,7 @@ export class Paragraph extends SkEmbindObject {
       ) {
         return [
           {
-            rect: new Float32Array([
+            rect: makeFloat32Array([
               0,
               lastLine.yOffset,
               0,

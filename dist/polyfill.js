@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.installPolyfill = void 0;
 const skia_1 = require("./adapter/skia");
 const polyfill_types_1 = require("./polyfill.types");
+const util_1 = require("./util");
 const installPolyfill = (canvasKit) => {
     canvasKit.ParagraphBuilder = new _ParagraphBuilderFactory();
     canvasKit.FontCollection = new _FontCollectionFactory();
@@ -108,7 +109,7 @@ class _TypefaceFontProviderFactory {
 }
 class _Typeface extends skia_1.SkEmbindObject {
     getGlyphIDs(str, numCodePoints, output) {
-        return new Uint16Array([]);
+        return (0, util_1.makeUint16Array)([]);
     }
 }
 class _Font extends skia_1.SkEmbindObject {
@@ -119,16 +120,16 @@ class _Font extends skia_1.SkEmbindObject {
         return { ascent: 0, descent: 0, leading: 0 };
     }
     getGlyphBounds(glyphs, paint, output) {
-        return new Float32Array([0, 0, 0, 0]);
+        return (0, util_1.makeFloat32Array)([0, 0, 0, 0]);
     }
     getGlyphIDs(str, numCodePoints, output) {
-        return new Uint16Array([]);
+        return (0, util_1.makeUint16Array)([]);
     }
     getGlyphWidths(glyphs, paint, output) {
-        return new Float32Array([]);
+        return (0, util_1.makeFloat32Array)([]);
     }
     getGlyphIntercepts(glyphs, positions, top, bottom) {
-        return new Float32Array([]);
+        return (0, util_1.makeFloat32Array)([]);
     }
     getScaleX() {
         return 1;
