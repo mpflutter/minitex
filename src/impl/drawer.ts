@@ -433,7 +433,7 @@ export class Drawer {
           break;
       }
 
-      if (span.style.decoration & UnderlineDecoration) {
+      if (span.style.decoration === UnderlineDecoration) {
         context.beginPath();
         context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 1);
         context.lineTo(
@@ -454,7 +454,7 @@ export class Drawer {
           context.stroke();
         }
       }
-      if (span.style.decoration & LineThroughDecoration) {
+      if (span.style.decoration === LineThroughDecoration || span.style.decoration === 3) {
         context.beginPath();
         context.moveTo(
           drawingLeft,
@@ -476,7 +476,7 @@ export class Drawer {
         }
         context.stroke();
       }
-      if (span.style.decoration & OverlineDecoration) {
+      if (span.style.decoration === OverlineDecoration) {
         context.beginPath();
         context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop);
         context.lineTo(drawingRight, currentDrawLine.yOffset + textTop);

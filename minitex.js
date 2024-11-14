@@ -9,6 +9,7 @@ const drawer_1 = require("../impl/drawer");
 const layout_1 = require("../impl/layout");
 const span_1 = require("../impl/span");
 const logger_1 = require("../logger");
+const util_1 = require("../util");
 const skia_1 = require("./skia");
 let drawParagraphSharedPaint;
 const drawParagraph = function (CanvasKit, skCanvas, paragraph, dx, dy) {
@@ -260,7 +261,7 @@ class Paragraph extends skia_1.SkEmbindObject {
                     }
                 }
                 result.push({
-                    rect: new Float32Array([
+                    rect: (0, util_1.makeFloat32Array)([
                         currentLineLeft,
                         currentLineTop,
                         currentLineLeft + currentLineWidth,
@@ -278,7 +279,7 @@ class Paragraph extends skia_1.SkEmbindObject {
                 lastSpan.originText.endsWith("\n")) {
                 return [
                     {
-                        rect: new Float32Array([
+                        rect: (0, util_1.makeFloat32Array)([
                             0,
                             lastLine.yOffset,
                             0,
@@ -325,7 +326,7 @@ class Paragraph extends skia_1.SkEmbindObject {
 }
 exports.Paragraph = Paragraph;
 
-},{"../impl/drawer":4,"../impl/layout":5,"../impl/span":6,"../logger":8,"./skia":3}],2:[function(require,module,exports){
+},{"../impl/drawer":4,"../impl/layout":5,"../impl/span":6,"../logger":8,"../util":12,"./skia":3}],2:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -942,7 +943,7 @@ class Drawer {
                     context.setLineDash([2, 2]);
                     break;
             }
-            if (span.style.decoration & skia_2.UnderlineDecoration) {
+            if (span.style.decoration === skia_2.UnderlineDecoration) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 1);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textBaseline + 1);
@@ -954,7 +955,7 @@ class Drawer {
                     context.stroke();
                 }
             }
-            if (span.style.decoration & skia_2.LineThroughDecoration) {
+            if (span.style.decoration === skia_2.LineThroughDecoration || span.style.decoration === 3) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + textHeight / 2.0);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + textHeight / 2.0);
@@ -964,7 +965,7 @@ class Drawer {
                 }
                 context.stroke();
             }
-            if (span.style.decoration & skia_2.OverlineDecoration) {
+            if (span.style.decoration === skia_2.OverlineDecoration) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textTop);
@@ -981,7 +982,7 @@ class Drawer {
 exports.Drawer = Drawer;
 Drawer.pixelRatio = 1.0;
 
-},{"../adapter/skia":3,"../logger":8,"../util":11,"./span":6}],5:[function(require,module,exports){
+},{"../adapter/skia":3,"../logger":8,"../util":12,"./span":6}],5:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1316,7 +1317,7 @@ class TextLayout {
 }
 exports.TextLayout = TextLayout;
 
-},{"../adapter/skia":3,"../logger":8,"../util":11,"./span":6}],6:[function(require,module,exports){
+},{"../adapter/skia":3,"../logger":8,"../util":12,"./span":6}],6:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1430,7 +1431,7 @@ const spanWithNewline = (spans) => {
 };
 exports.spanWithNewline = spanWithNewline;
 
-},{"../adapter/skia":3,"../util":11}],7:[function(require,module,exports){
+},{"../adapter/skia":3,"../util":12}],7:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
@@ -1524,6 +1525,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.installPolyfill = void 0;
 const skia_1 = require("./adapter/skia");
 const polyfill_types_1 = require("./polyfill.types");
+const util_1 = require("./util");
 const installPolyfill = (canvasKit) => {
     canvasKit.ParagraphBuilder = new _ParagraphBuilderFactory();
     canvasKit.FontCollection = new _FontCollectionFactory();
@@ -1549,6 +1551,7 @@ const installPolyfill = (canvasKit) => {
     canvasKit.FontSlant = new polyfill_types_1.FontSlantEnumValues();
     canvasKit.DecorationStyle = new polyfill_types_1.DecorationStyleEnumValues();
     canvasKit.TextHeightBehavior = new polyfill_types_1.TextHeightBehaviorEnumValues();
+    canvasKit.PlaceholderAlignment = new polyfill_types_1.PlaceholderAlignmentEnumValues();
     // Paragraph Constants
     canvasKit.NoDecoration = 0;
     canvasKit.UnderlineDecoration = 1;
@@ -1628,7 +1631,7 @@ class _TypefaceFontProviderFactory {
 }
 class _Typeface extends skia_1.SkEmbindObject {
     getGlyphIDs(str, numCodePoints, output) {
-        return new Uint16Array([]);
+        return (0, util_1.makeUint16Array)([]);
     }
 }
 class _Font extends skia_1.SkEmbindObject {
@@ -1639,16 +1642,16 @@ class _Font extends skia_1.SkEmbindObject {
         return { ascent: 0, descent: 0, leading: 0 };
     }
     getGlyphBounds(glyphs, paint, output) {
-        return new Float32Array([0, 0, 0, 0]);
+        return (0, util_1.makeFloat32Array)([0, 0, 0, 0]);
     }
     getGlyphIDs(str, numCodePoints, output) {
-        return new Uint16Array([]);
+        return (0, util_1.makeUint16Array)([]);
     }
     getGlyphWidths(glyphs, paint, output) {
-        return new Float32Array([]);
+        return (0, util_1.makeFloat32Array)([]);
     }
     getGlyphIntercepts(glyphs, positions, top, bottom) {
-        return new Float32Array([]);
+        return (0, util_1.makeFloat32Array)([]);
     }
     getScaleX() {
         return 1;
@@ -1677,10 +1680,10 @@ class _Font extends skia_1.SkEmbindObject {
     setTypeface(face) { }
 }
 
-},{"./adapter/skia":3,"./polyfill.types":10}],10:[function(require,module,exports){
+},{"./adapter/skia":3,"./polyfill.types":10,"./util":12}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextHeightBehaviorEnumValues = exports.DecorationStyleEnumValues = exports.FontSlantEnumValues = exports.FontWidthEnumValues = exports.FontWeightEnumValues = exports.AffinityEnumValues = exports.RectWidthStyleEnumValues = exports.RectHeightStyleEnumValues = exports.TextBaselineEnumValues = exports.TextDirectionEnumValues = exports.TextAlignEnumValues = exports.FontHinting = exports.FontEdging = void 0;
+exports.PlaceholderAlignmentEnumValues = exports.TextHeightBehaviorEnumValues = exports.DecorationStyleEnumValues = exports.FontSlantEnumValues = exports.FontWidthEnumValues = exports.FontWeightEnumValues = exports.AffinityEnumValues = exports.RectWidthStyleEnumValues = exports.RectHeightStyleEnumValues = exports.TextBaselineEnumValues = exports.TextDirectionEnumValues = exports.TextAlignEnumValues = exports.FontHinting = exports.FontEdging = void 0;
 var FontEdging;
 (function (FontEdging) {
     FontEdging[FontEdging["Alias"] = 0] = "Alias";
@@ -1801,14 +1804,46 @@ class TextHeightBehaviorEnumValues {
     }
 }
 exports.TextHeightBehaviorEnumValues = TextHeightBehaviorEnumValues;
+class PlaceholderAlignmentEnumValues {
+    constructor() {
+        this.Baseline = { value: 0 };
+        this.AboveBaseline = { value: 1 };
+        this.BelowBaseline = { value: 2 };
+        this.Top = { value: 3 };
+        this.Bottom = { value: 4 };
+        this.Middle = { value: 5 };
+    }
+}
+exports.PlaceholderAlignmentEnumValues = PlaceholderAlignmentEnumValues;
 
 },{}],11:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.appTarget = void 0;
+exports.appTarget = "normal";
+
+},{}],12:[function(require,module,exports){
 "use strict";
 // Copyright 2023 The MPFlutter Authors. All rights reserved.
 // Use of this source code is governed by a Apache License Version 2.0 that can be
 // found in the LICENSE file.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCanvas = exports.convertToUpwardToPixelRatio = exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.valueOfRectXYWH = exports.valueOfRGBAInt = exports.colorToHex = void 0;
+exports.createCanvas = exports.convertToUpwardToPixelRatio = exports.isPunctuation = exports.isSquareCharacter = exports.isEnglishWord = exports.valueOfRectXYWH = exports.valueOfRGBAInt = exports.colorToHex = exports.makeUint16Array = exports.makeFloat32Array = void 0;
+const target_1 = require("./target");
+const makeFloat32Array = (arr) => {
+    if (target_1.appTarget === "wegame") {
+        return arr;
+    }
+    return new Float32Array(arr);
+};
+exports.makeFloat32Array = makeFloat32Array;
+const makeUint16Array = (arr) => {
+    if (target_1.appTarget === "wegame") {
+        return arr;
+    }
+    return new Uint16Array(arr);
+};
+exports.makeUint16Array = makeUint16Array;
 const colorToHex = (rgbaColor) => {
     const r = Math.round(rgbaColor[0] * 255).toString(16);
     const g = Math.round(rgbaColor[1] * 255).toString(16);
@@ -1895,8 +1930,16 @@ function convertToUpwardToPixelRatio(number, pixelRatio) {
 }
 exports.convertToUpwardToPixelRatio = convertToUpwardToPixelRatio;
 function createCanvas(width, height) {
-    if (typeof wx === "object" && typeof wx.createOffscreenCanvas === "function") {
+    if (typeof wx === "object" &&
+        typeof wx.createOffscreenCanvas === "function") {
         return wx.createOffscreenCanvas({
+            type: "2d",
+            width: width,
+            height: height,
+        });
+    }
+    else if (typeof wx === "object" && typeof wx.createCanvas === "function") {
+        return wx.createCanvas({
             type: "2d",
             width: width,
             height: height,
@@ -1914,5 +1957,5 @@ function createCanvas(width, height) {
 }
 exports.createCanvas = createCanvas;
 
-},{}]},{},[7])(7)
+},{"./target":11}]},{},[7])(7)
 });

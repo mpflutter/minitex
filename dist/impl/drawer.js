@@ -281,7 +281,7 @@ class Drawer {
                     context.setLineDash([2, 2]);
                     break;
             }
-            if (span.style.decoration & skia_2.UnderlineDecoration) {
+            if (span.style.decoration === skia_2.UnderlineDecoration) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textBaseline + 1);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textBaseline + 1);
@@ -293,7 +293,7 @@ class Drawer {
                     context.stroke();
                 }
             }
-            if (span.style.decoration & skia_2.LineThroughDecoration) {
+            if (span.style.decoration === skia_2.LineThroughDecoration || span.style.decoration === 3) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop + textHeight / 2.0);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textTop + textHeight / 2.0);
@@ -303,7 +303,7 @@ class Drawer {
                 }
                 context.stroke();
             }
-            if (span.style.decoration & skia_2.OverlineDecoration) {
+            if (span.style.decoration === skia_2.OverlineDecoration) {
                 context.beginPath();
                 context.moveTo(drawingLeft, currentDrawLine.yOffset + textTop);
                 context.lineTo(drawingRight, currentDrawLine.yOffset + textTop);
